@@ -42,13 +42,19 @@ test.describe('page initialization', () => {
     await expect(page.locator('#addform input[name=date]')).not.toHaveValue('');
   });
 
-  test('a transaction link highlights its target row', async ({ page }) => {
+  // The mark is a :target rule in hledger.css, so assert on the rendered
+  // colour rather than on a class: that is what the reader actually sees.
+  test('a transaction link marks its target row', async ({ page }) => {
     await page.goto('/journal');
     const link = page.locator('#main-content a[title="assets:bank:checking"]').first();
     const id = (await link.getAttribute('href')).split('#')[1];
     await link.click();
     await expect(page).toHaveURL(/register/);
-    await expect(page.locator(`[id="${id}"]`)).toHaveClass(/highlighted/);
+    await expect(page.locator(`[id="${id}"]`)).toBeVisible();
+    const colourOf = l => l.evaluate(el => getComputedStyle(el).backgroundColor);
+    const target = page.locator(`[id="${id}"] > td`).first();
+    const other = page.locator('#main-content tbody tr:not(:target) > td').first();
+    expect(await colourOf(target)).not.toEqual(await colourOf(other));
     expect(pageErrors).toEqual([]);
   });
 
@@ -70,17 +76,18 @@ test.describe('add form', () => {
     expect(pageErrors).toEqual([]);
   });
 
-  // Completion matches from the start of the full account name, so 'ass'
-  // offers assets:... while 'che' (mid-name) offers nothing.
-  test('the account field autocompletes account names', async ({ page }) => {
+  // Completion is a native <datalist>. The browser draws its dropdown outside
+  // the page, so a test can only check that the field is wired to a list and
+  // that the list offers the journal's accounts and descriptions.
+  test('the account and description fields offer completions', async ({ page }) => {
     await page.goto('/journal');
     await openAddForm(page);
-    await page.locator('#addform input.account-input.tt-input').first()
-      .pressSequentially('ass', { delay: 30 });
-    const suggestions = page.locator('#addform .account-group').first()
-      .locator('.tt-suggestion, [role=listbox] [role=option]');
-    await expect(suggestions.first()).toBeVisible({ timeout: 3000 });
-    await expect(suggestions.filter({ hasText: 'assets:bank:checking' })).toHaveCount(1);
+    await expect(page.locator('#addform input[name=account]').first())
+      .toHaveAttribute('list', 'accountnames');
+    await expect(page.locator('#addform input[name=description]'))
+      .toHaveAttribute('list', 'descriptionnames');
+    await expect(page.locator('#accountnames option[value="assets:bank:checking"]')).toHaveCount(1);
+    await expect(page.locator('#descriptionnames option[value="Cafe Luna"]')).toHaveCount(1);
   });
 
   test('the date field offers a picker and accepts a typed date', async ({ page }) => {

@@ -1,4 +1,3 @@
-{-# LANGUAGE CPP #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE OverloadedStrings #-}
@@ -12,19 +11,15 @@ module Hledger.Web.Widget.AddForm
   ) where
 
 import Control.Monad.State.Strict (evalStateT)
-#if MIN_VERSION_base64(1,0,0)
-import Data.Base64.Types (extractBase64)
-#endif
 import Data.Bifunctor (first)
 import Data.Foldable (toList)
 import Data.List (dropWhileEnd, unfoldr)
 import Data.Maybe (isJust, fromMaybe)
 import Data.Set qualified as S
 import Data.Text (Text)
-import Data.Text.Encoding.Base64 (encodeBase64)
 import Data.Text qualified as T
 import Data.Time (Day)
-import Text.Blaze.Internal (Markup, preEscapedText)
+import Text.Blaze.Internal (Markup)
 import Text.Megaparsec (bundleErrors, eof, parseErrorTextPretty, runParser)
 import Yesod
 
@@ -86,7 +81,7 @@ addForm j today = identifyForm "add" $ \extra -> do
           | otherwise = Left $ MsgInputNotFound $ T.pack f
     -- field settings
     dateSettings = FieldSettings "date" Nothing Nothing (Just "date") [("class", "form-control input-lg"), ("placeholder", "Date")]
-    descSettings = FieldSettings "desc" Nothing Nothing (Just "description") [("class", "form-control input-lg typeahead"), ("placeholder", "Description"), ("size", "40")]
+    descSettings = FieldSettings "desc" Nothing Nothing (Just "description") [("class", "form-control input-lg"), ("placeholder", "Description"), ("size", "40"), ("list", "descriptionnames")]
     acctSettings = FieldSettings "account" Nothing Nothing (Just "account") []
     amtSettings  = FieldSettings "amount" Nothing Nothing (Just "amount") []
     fileSettings = FieldSettings "file" Nothing Nothing (Just "file") [("class", "form-control input-lg")]
@@ -171,36 +166,6 @@ validatePostings acctsRes amtsRes = let
     Right xs -> FormSuccess xs
 
   in (formResult, zip [(1 :: Int)..] display)
-
--- helper for add-form.hamlet
-toBloodhoundJson :: [Text] -> Markup
-toBloodhoundJson ts =
-  -- This used to work, but since 1.16, it seems like something changed.
-  -- toJSON ("a"::Text) gives String "a" instead of "a", etc.
-  -- preEscapedString . escapeJSSpecialChars . show . toJSON
-
-  preEscapedText $ T.concat [
-    "[",
-    T.intercalate "," $ map (
-      ("{\"value\":" <>).
-      (<> "}").
-      -- This will convert a value such as ``hledger!`` into
-      -- ``atob("aGxlZGdlciE=")``. When this gets evaluated on the client,
-      -- the resulting string is ``hledger!`` again. The same data is
-      -- passed, but the user-controlled bit of that string can only use
-      -- characters [a-zA-Z0-9+=/], making it impossible to break out of
-      -- string context.
-      b64wrap
-      ) ts,
-    "]"
-    ]
-  where
-    -- decodeBase64EncodedText is defined in add-form.hamlet
-    b64wrap = ("decodeBase64EncodedText(\""<>) . (<>"\")") .
-#if MIN_VERSION_base64(1,0,0)
-      extractBase64 .
-#endif
-      encodeBase64
 
 zipDefault :: a -> [a] -> [a] -> [(a, a)]
 zipDefault def (b:bs) (c:cs) = (b, c):(zipDefault def bs cs)

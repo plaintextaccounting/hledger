@@ -46,22 +46,19 @@ test.describe('journal data is rendered as text, not markup', () => {
     expect(await xssFired(page)).toBe(false);
   });
 
-  // The add form injects account names and descriptions into a <script> block
-  // for autocomplete. That is a javascript string context, not html, so
-  // escaping alone would not be enough; the data is base64-encoded instead.
-  // If that breaks, the page throws a syntax error and startup dies here.
-  test('autocomplete data cannot break out of its script context', async ({ page }) => {
+  // Completion data is <option> markup, so the payload must arrive as an
+  // attribute value and nothing else: no element created, nothing executed.
+  test('autocomplete options carry a payload inertly', async ({ page }) => {
     await page.goto('/journal');
     await page.locator('body').press('a');
     await expect(page.locator('#addmodal')).toBeVisible();
     expect(pageErrors).toEqual([]);
     expect(await xssFired(page)).toBe(false);
-    // and the completer still works with the payload present in its data
-    await page.locator('#addform input.account-input.tt-input').first()
-      .pressSequentially('ass', { delay: 30 });
-    await expect(
-      page.locator('#addform .account-group').first().locator('.tt-suggestion').first()
-    ).toBeVisible({ timeout: 3000 });
+    // the payload is offered as a completion, as a value rather than markup
+    expect(await page.locator('#descriptionnames option[value*="onerror"]').count())
+      .toBeGreaterThan(0);
+    expect(await page.locator('#descriptionnames img, #accountnames img').count()).toBe(0);
+    expect(await page.locator('#descriptionnames script, #accountnames script').count()).toBe(0);
     expect(await xssFired(page)).toBe(false);
   });
 

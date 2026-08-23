@@ -32,44 +32,35 @@ body {
 }
 
 /*------------------------------------------------------------------------------------------*/
-/* 4. typeahead styles */
+/* 4. the add form's date picker button */
 
-.tt-hint {
-  color: #bbb;
+#datebutton {
+  cursor: pointer;
 }
 
-.tt-dropdown-menu {
-  padding: 8px 0;
-  background-color: #fff;
-  border: 1px solid #ccc;
-  border: 1px solid rgba(0, 0, 0, 0.2);
-  -webkit-border-radius: 8px;
-     -moz-border-radius: 8px;
-          border-radius: 8px;
-  -webkit-box-shadow: 0 5px 10px rgba(0,0,0,.2);
-     -moz-box-shadow: 0 5px 10px rgba(0,0,0,.2);
-          box-shadow: 0 5px 10px rgba(0,0,0,.2);
-  overflow:auto;
-  max-height:300px;
+/* The date input that backs the picker button. It must be rendered for
+   showPicker to work, so it is placed under the button rather than hidden. */
+#datepicked {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  border: 0;
+  opacity: 0;
+  pointer-events: none;
 }
 
-.tt-suggestion {
-  padding: 3px 20px;
-  font-size: 18px;
-  line-height: 24px;
-}
+/*------------------------------------------------------------------------------------------*/
+/* 5. the entry targeted by the url hash */
 
-.tt-suggestion.tt-cursor {
-  color: #fff;
-  background-color: #0097cf;
-}
-
-.tt-suggestion p {
-  margin: 0;
-}
-
-.twitter-typeahead {
-  width:100%;
+/* Following a link to a transaction or posting marks it. This replaces
+   javascript that added a .highlighted class on load and on hashchange, which
+   no stylesheet ever styled, so nothing was ever marked. */
+.table > tbody > tr:target > td,
+tr:target > td {
+  background-color: #fcf8e3;
 }
 
 code {

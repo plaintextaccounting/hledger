@@ -3,63 +3,75 @@
 //----------------------------------------------------------------------
 // STARTUP
 
-$(document).ready(function() {
+document.addEventListener('DOMContentLoaded', function() {
 
-  // add form helpers XXX move to addForm ?
-
-  // date picker
-  // http://bootstrap-datepicker.readthedocs.io/en/latest/options.html
-  var dateEl = $('#dateWrap').datepicker({
-    showOnFocus: false,
-    autoclose: true,
-    format: 'yyyy-mm-dd',
-    todayHighlight: true,
-    weekStart: 1 // Monday
-  });;
-
-  // focus and pre-fill the add form whenever it is shown
-  $('#addmodal')
-    .on('shown.bs.modal', function() {
-      addformFocus();
-    })
-    .on('hidden.bs.modal', function() {
-      // close the date picker if open
-      dateEl.datepicker('hide');
-    });
-
-  // ensure that the keypress listener on the final amount input is always active
-  $('#addform')
-    .on('focus', '.amount-input:last', function() {
-      addformLastAmountBindKey();
-    });
-
-  // keyboard shortcuts
-  // 'body' seems to hold focus better than document in FF
-  $('body').bind('keydown', 'h',       function(){ $('#helpmodal').modal('toggle'); return false; });
-  $('body').bind('keydown', 'shift+/', function(){ $('#helpmodal').modal('toggle'); return false; });
-  $('body').bind('keydown', 'j',       function(){ location.href = document.hledgerWebBaseurl+'/journal'; return false; });
-  $('body').bind('keydown', 's',       function(){ sidebarToggle(); return false; });
-  $('body').bind('keydown', 'e',       function(){ emptyAccountsToggle(); return false; });
-  $('body').bind('keydown', 'a',       function(){ addformShow(); return false; });
-  $('body').bind('keydown', 'n',       function(){ addformShow(); return false; });
-  $('body').bind('keydown', 'f',       function(){ $('#searchform input').focus(); return false; });
-
-  // highlight the entry from the url hash
-  if (window.location.hash && $(window.location.hash)[0]) {
-    $(window.location.hash).addClass('highlighted');
+  // Prefill and focus the add form whenever it is shown. bootstrap's modal
+  // fires this as a jquery event, which a native listener would never see.
+  if (document.getElementById('addmodal')) {
+    jQuery('#addmodal').on('shown.bs.modal', addformFocus);
   }
-  $(window).on('hashchange', function() {
-    $('.highlighted').removeClass('highlighted');
-    $(window.location.hash).addClass('highlighted');
+
+  // Typing in the last amount field adds another posting row. Delegating from
+  // the form means the handler does not have to be moved as rows come and go.
+  var addform = document.getElementById('addform');
+  if (addform) {
+    addform.addEventListener('keypress', function(e) {
+      if (!e.target.classList.contains('amount-input')) { return; }
+      var amounts = addform.querySelectorAll('.amount-input');
+      if (e.target === amounts[amounts.length - 1]) { addformAddPosting(); }
+    });
+  }
+
+  // The date field is a text input, so hledger's smart dates ("today", "2/15")
+  // keep working. The button beside it opens the browser's own calendar, via
+  // the hidden date input, and what you pick is written back as an iso date.
+  var datebutton = document.getElementById('datebutton');
+  var datepicked = document.getElementById('datepicked');
+  if (datebutton && datepicked) {
+    datebutton.addEventListener('click', function() {
+      var datefield = document.querySelector('#addform input[name=date]');
+      datepicked.value = /^\d{4}-\d{2}-\d{2}$/.test(datefield.value) ? datefield.value : isoDate();
+      if (datepicked.showPicker) { datepicked.showPicker(); }
+    });
+    datepicked.addEventListener('change', function() {
+      var datefield = document.querySelector('#addform input[name=date]');
+      if (datepicked.value) { datefield.value = datepicked.value; }
+    });
+  }
+
+  // Keyboard shortcuts. Not while typing in a field, or the search box would
+  // toggle the sidebar and open the add form as you spell "assets".
+  document.addEventListener('keydown', function(e) {
+    if (e.ctrlKey || e.metaKey || e.altKey) { return; }
+    if (e.target.closest('input, textarea, select')) { return; }
+    switch (e.key) {
+      case 'h': case '?': helpToggle();                                     break;
+      case 'j': location.href = document.hledgerWebBaseurl + '/journal';     break;
+      case 's': sidebarToggle();                                            break;
+      case 'e': emptyAccountsToggle();                                      break;
+      case 'a': case 'n': addformShow();                                    break;
+      case 'f': focusSearch();                                              break;
+      default: return;
+    }
+    e.preventDefault();
   });
-  $('[data-toggle="offcanvas"]').click(function () {
-      $('.row-offcanvas').toggleClass('active');
+
+  document.querySelectorAll('[data-toggle="offcanvas"]').forEach(function(el) {
+    el.addEventListener('click', function() {
+      var row = document.querySelector('.row-offcanvas');
+      if (row) { row.classList.toggle('active'); }
+    });
   });
 });
+
+// The entry targeted by the url hash is marked by a :target rule in
+// hledger.css. That needs no javascript, and unlike passing location.hash to
+// querySelector it cannot trip over the numeric ids that register rows use.
+
 // The account sidebar's scroll position is preserved across page navigations
 // by an inline script right after the sidebar's markup in
 // default-layout.hamlet. It must run during page parse, not from this file:
-// this script loads at the end of the body and $(document).ready fires only
+// this script loads at the end of the body and DOMContentLoaded fires only
 // once the whole document is parsed, while the browser paints the sidebar
 // (at scroll position 0) much earlier when a long journal or register
 // follows it, which made the sidebar visibly jump on page load.
@@ -68,106 +80,99 @@ $(document).ready(function() {
 // ADD FORM
 
 function addformShow(showmsg) {
-  showmsg = typeof showmsg !== 'undefined' ? showmsg : false;
-  addformReset(showmsg);
-  $('#addmodal').modal('show');
+  addformReset(typeof showmsg !== 'undefined' ? showmsg : false);
+  jQuery('#addmodal').modal('show');  // bootstrap's modal needs jquery
+}
+
+function helpToggle() {
+  jQuery('#helpmodal').modal('toggle');  // bootstrap's modal needs jquery
 }
 
 // Make sure the add form is empty and clean and has the default number of rows.
 function addformReset(showmsg) {
-  showmsg = typeof showmsg !== 'undefined' ? showmsg : false;
-  if ($('form#addform').length > 0) {
-    if (!showmsg) $('div#message').html('');
-    $('#addform .account-group.added-row').remove();
-    addformLastAmountBindKey();
-    $('#addform')[0].reset();
-    // reset typehead state (though not fetched completions)
-    $('.typeahead').typeahead('val', '');
-    $('.tt-dropdown-menu').hide();
+  var addform = document.getElementById('addform');
+  if (!addform) { return; }
+  if (!showmsg) {
+    var msg = document.getElementById('message');
+    if (msg) { msg.innerHTML = ''; }
   }
-}
-
-// Set the add-new-row-on-keypress handler on the add form's current last amount field, only.
-// (NB: removes all other keypress handlers from all amount fields).
-function addformLastAmountBindKey() {
-  $('input[name=amount]').off('keypress');
-  $('input[name=amount]:last').keypress(addformAddPosting);
+  addform.querySelectorAll('.account-group.added-row').forEach(function(el) {
+    el.remove();
+  });
+  addform.reset();
 }
 
 // Pre-fill today's date and focus the description field in the add form.
 function addformFocus() {
-  $('#addform input[name=date]').val(isoDate());
-  focus($('#addform input[name=description]'));
+  var addform = document.getElementById('addform');
+  if (!addform) { return; }
+  addform.querySelector('input[name=date]').value = isoDate();
+  // Deferred, so the field is focusable: http://stackoverflow.com/a/7046837
+  setTimeout(function() {
+    addform.querySelector('input[name=description]').focus();
+  }, 0);
 }
 
 function isoDate() {
   return new Date().toLocaleDateString("sv");  // https://stackoverflow.com/a/58633651/84401
 }
 
-// Focus a jquery-wrapped element, working around http://stackoverflow.com/a/7046837.
-function focus($el) {
-  setTimeout(function (){
-    $el.focus();
-  }, 0);
+function focusSearch() {
+  var q = document.querySelector('#searchform input');
+  if (q) { q.focus(); }
 }
 
 // Insert another posting row in the add form.
 function addformAddPosting() {
-  if (!$('#addform').is(':visible')) { return; }
+  var addform = document.getElementById('addform');
+  if (!addform) { return; }
+  var groups = addform.querySelectorAll('.account-group');
+  var newrow = groups[groups.length - 1].cloneNode(true);
+  newrow.classList.add('added-row');
+  var num = groups.length + 1;
 
-  // Clone the last row.
-  var newrow = $('#addform .account-group:last').clone().addClass('added-row');
-  var newnum = $('#addform .account-group').length + 1;
+  var account = newrow.querySelector('input[name=account]');
+  var amount = newrow.querySelector('input[name=amount]');
+  account.value = '';
+  amount.value = '';
+  account.placeholder = 'Account ' + num;
+  amount.placeholder = 'Amount ' + num;
 
-  // Clear the new account and amount fields and update their placeholder text.
-  var accountfield = newrow.find('input[name=account]');
-  var amountfield  = newrow.find('input[name=amount]');
-  accountfield.val('').prop('placeholder', 'Account '+newnum);
-  amountfield.val('').prop('placeholder', 'Amount '+newnum);
-
-  // Enable autocomplete in the new account field.
-  // We must first remove these typehead helper elements cloned from the old row,
-  // or it will recursively add helper elements for those, causing confusion (#2215).
-  newrow.find('.tt-hint').remove();
-  newrow.find('.tt-input').removeClass('tt-input');
-  accountfield.typeahead({ highlight: true }, { source: globalThis.accountsCompleter.ttAdapter(), templates: { suggestion: globalThis.suggestionTemplate } });
-
-  // Add the new row to the page.
-  $('#addform .account-postings').append(newrow);
-
-  // And move the keypress handler to the new last amount field.
-  addformLastAmountBindKey();
-}
-
-// Remove the add form's last posting row, if empty, keeping at least two.
-function addformDeletePosting() {
-  if ($('#addform .account-group').length <= 2) {
-    return;
-  }
-  // remember if the last row's field or button had focus
-  var focuslost =
-    $('.account-input:last').is(':focus')
-    || $('.amount-input:last').is(':focus');
-  // delete last row
-  $('#addform .account-group:last').remove();
-  if (focuslost) {
-    focus($('.account-input:last'));
-  }
-  // move the keypress handler to the new last amount field
-  addformLastAmountBindKey();
+  addform.querySelector('.account-postings').appendChild(newrow);
 }
 
 //----------------------------------------------------------------------
 // SIDEBAR
 
 function sidebarToggle() {
-  $('#sidebar-menu').toggleClass('col-md-4 col-sm-4 col-any-0');
-  $('#main-content').toggleClass('col-md-8 col-sm-8 col-md-12 col-sm-12');
-  $('#spacer').toggleClass('col-md-4 col-sm-4 col-any-0');
-  $.cookie('showsidebar', $('#sidebar-menu').hasClass('col-any-0') ? '0' : '1');
+  var sidebar = document.getElementById('sidebar-menu');
+  var main = document.getElementById('main-content');
+  var spacer = document.getElementById('spacer');
+  [sidebar, spacer].forEach(function(el) {
+    if (el) { el.classList.toggle('col-md-4'); el.classList.toggle('col-sm-4'); el.classList.toggle('col-any-0'); }
+  });
+  if (main) {
+    main.classList.toggle('col-md-8'); main.classList.toggle('col-sm-8');
+    main.classList.toggle('col-md-12'); main.classList.toggle('col-sm-12');
+  }
+  // The server reads this cookie, so the next page renders the way we left it.
+  setCookie('showsidebar', sidebar && sidebar.classList.contains('col-any-0') ? '0' : '1');
 }
 
 function emptyAccountsToggle() {
-  $('.acct.empty').parent().toggleClass('hide');
-  $.cookie('hideemptyaccts', $.cookie('hideemptyaccts') === '1' ? '0' : '1')
+  document.querySelectorAll('.acct.empty').forEach(function(el) {
+    el.parentNode.classList.toggle('hide');
+  });
+  setCookie('hideemptyaccts', getCookie('hideemptyaccts') === '1' ? '0' : '1');
+}
+
+function setCookie(name, value) {
+  document.cookie = name + '=' + value + '; path=/; max-age=31536000; samesite=lax';
+}
+
+function getCookie(name) {
+  return document.cookie.split('; ').reduce(function(found, c) {
+    var parts = c.split('=');
+    return parts[0] === name ? parts.slice(1).join('=') : found;
+  }, undefined);
 }
