@@ -23,6 +23,10 @@ User-visible changes in hledger-ui.
 See also the hledger changelog.
 
 
+# c3f7e11c
+
+
+
 # 1.52.1 2026-04-28
 
 Improvements
