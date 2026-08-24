@@ -213,6 +213,45 @@ test.describe('keyboard shortcuts', () => {
 
 });
 
+test.describe('modal dialogs', () => {
+
+  // A <dialog> shown with showModal() should capture the shortcut keys; before
+  // the guard, keys pressed with a dialog open acted on the page behind it.
+  test('shortcut keys do nothing while a modal is open', async ({ page }) => {
+    await page.goto('/register');
+    await page.locator('body').press('h');
+    await expect(page.locator('#helpmodal')).toBeVisible();
+    await page.locator('body').press('j');   // would go to /journal
+    await page.locator('body').press('a');   // would open the add form
+    await expect(page).toHaveURL(/register/);
+    await expect(page.locator('#helpmodal')).toBeVisible();
+    await expect(page.locator('#addmodal')).toBeHidden();
+    expect(pageErrors).toEqual([]);
+  });
+
+  // showModal() throws if the dialog is already open; the add-form shortcut
+  // must not raise an uncaught error when pressed with the form already up.
+  test('re-triggering the add form while open does not error', async ({ page }) => {
+    await page.goto('/journal');
+    await page.locator('body').press('a');
+    await expect(page.locator('#addmodal')).toBeVisible();
+    await page.locator('body').press('a');
+    await expect(page.locator('#addmodal')).toBeVisible();
+    expect(pageErrors).toEqual([]);
+  });
+
+  // Clicking the backdrop closes the dialog (the help text promises this).
+  test('clicking outside the dialog closes it', async ({ page }) => {
+    await page.goto('/journal');
+    await page.locator('body').press('h');
+    await expect(page.locator('#helpmodal')).toBeVisible();
+    await page.mouse.click(4, 4);   // top-left corner: the backdrop
+    await expect(page.locator('#helpmodal')).toBeHidden();
+    expect(pageErrors).toEqual([]);
+  });
+
+});
+
 test.describe('sidebar', () => {
 
   // Regression test for #2651: the sidebar's scroll position is restored

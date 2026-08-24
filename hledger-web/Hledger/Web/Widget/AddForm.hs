@@ -33,15 +33,11 @@ addModal :: Route App -> Journal -> Day -> Widget
 addModal addR j today = do
   (addView, addEnctype) <- handlerToWidget $ generateFormPost (addForm j today)
   [whamlet|
-<div .modal #addmodal tabindex="-1" role="dialog" aria-labelledby="addLabel" aria-hidden="true">
-  <div .modal-dialog .modal-lg>
-    <div .modal-content>
-      <div .modal-header>
-        <button type="button" .close data-dismiss="modal" aria-hidden="true">&times;
-        <h3 .modal-title #addLabel>Add a transaction
-      <div .modal-body>
-        <form#addform.form action=@{addR} method=POST enctype=#{addEnctype}>
-          ^{addView}
+<dialog #addmodal aria-labelledby="addLabel">
+  <button type="button" .close data-dismiss="modal" aria-label="Close">&times;
+  <h3 #addLabel>Add a transaction
+  <form#addform.form action=@{addR} method=POST enctype=#{addEnctype}>
+    ^{addView}
 |]
 
 addForm :: Journal -> Day -> Markup -> MForm Handler (FormResult (Transaction,FilePath), Widget)

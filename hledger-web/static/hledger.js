@@ -5,11 +5,29 @@
 
 document.addEventListener('DOMContentLoaded', function() {
 
-  // Prefill and focus the add form whenever it is shown. bootstrap's modal
-  // fires this as a jquery event, which a native listener would never see.
-  if (document.getElementById('addmodal')) {
-    jQuery('#addmodal').on('shown.bs.modal', addformFocus);
-  }
+  // Open and close the dialogs. bootstrap's data attributes are reused as
+  // hooks, so the templates that trigger them do not have to change.
+  document.querySelectorAll('[data-toggle="modal"]').forEach(function(el) {
+    el.addEventListener('click', function(e) {
+      e.preventDefault();
+      var d = document.querySelector(el.getAttribute('data-target'));
+      if (!d) { return; }
+      if (d.id === 'addmodal') { addformShow(); } else { d.showModal(); }
+    });
+  });
+  document.querySelectorAll('[data-dismiss="modal"]').forEach(function(el) {
+    el.addEventListener('click', function() {
+      var d = el.closest('dialog');
+      if (d) { d.close(); }
+    });
+  });
+  // Clicking the backdrop closes a modal dialog. With showModal() a click on
+  // the backdrop is reported as a click on the dialog element itself.
+  document.querySelectorAll('dialog').forEach(function(d) {
+    d.addEventListener('click', function(e) {
+      if (e.target === d) { d.close(); }
+    });
+  });
 
   // Typing in the last amount field adds another posting row. Delegating from
   // the form means the handler does not have to be moved as rows come and go.
@@ -44,6 +62,7 @@ document.addEventListener('DOMContentLoaded', function() {
   document.addEventListener('keydown', function(e) {
     if (e.ctrlKey || e.metaKey || e.altKey) { return; }
     if (e.target.closest('input, textarea, select')) { return; }
+    if (document.querySelector('dialog[open]')) { return; }
     switch (e.key) {
       case 'h': case '?': helpToggle();                                     break;
       case 'j': location.href = document.hledgerWebBaseurl + '/journal';     break;
@@ -80,12 +99,17 @@ document.addEventListener('DOMContentLoaded', function() {
 // ADD FORM
 
 function addformShow(showmsg) {
+  var d = document.getElementById('addmodal');
+  if (!d || d.open) { return; }  // showModal() throws if already open
   addformReset(typeof showmsg !== 'undefined' ? showmsg : false);
-  jQuery('#addmodal').modal('show');  // bootstrap's modal needs jquery
+  d.showModal();
+  addformFocus();
 }
 
 function helpToggle() {
-  jQuery('#helpmodal').modal('toggle');  // bootstrap's modal needs jquery
+  var d = document.getElementById('helpmodal');
+  if (!d) { return; }
+  if (d.open) { d.close(); } else { d.showModal(); }
 }
 
 // Make sure the add form is empty and clean and has the default number of rows.
@@ -130,6 +154,10 @@ function addformAddPosting() {
   var newrow = groups[groups.length - 1].cloneNode(true);
   newrow.classList.add('added-row');
   var num = groups.length + 1;
+
+  // The cloned row may carry error styling from a previous failed submit.
+  newrow.querySelectorAll('.has-error').forEach(function(el) { el.classList.remove('has-error'); });
+  newrow.querySelectorAll('.error-block').forEach(function(el) { el.remove(); });
 
   var account = newrow.querySelector('input[name=account]');
   var amount = newrow.querySelector('input[name=amount]');

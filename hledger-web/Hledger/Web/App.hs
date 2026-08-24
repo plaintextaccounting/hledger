@@ -172,7 +172,6 @@ instance Yesod App where
       toWidgetHead [hamlet|
         <script type="text/javascript" src="@{StaticR js_jquery_min_js}">
       |]
-      addScript $ StaticR js_bootstrap_min_js
       addScript $ StaticR js_jquery_flot_min_js
       addScript $ StaticR js_jquery_flot_selection_min_js
       addScript $ StaticR js_jquery_flot_time_min_js
