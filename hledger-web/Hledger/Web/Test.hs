@@ -145,6 +145,34 @@ hledgerWebTest = do
       bodyContains "id=\"transaction-2-1\""
       bodyContains "id=\"transaction-2-2\""
 
+  -- Submitting an unbalanced transaction produces an error message that
+  -- echoes the entry (account names, amounts). Those values must be rendered
+  -- as text, not raw html.
+  aj <- fmap (either error' id) . runExceptT . journalFinalise iopts "add.journal" "" =<<
+          readJournal'' (T.pack $ unlines  -- PARTIAL: readJournal'' should not fail
+            ["2025-01-01 opening"
+            ,"    assets:bank:checking   100"
+            ,"    equity:opening"])
+  runTests "hledger-web add form" [("allow","add")] aj $ do
+
+    yit "escapes submitted values in an add-form error message" $ do
+      get JournalR
+      statusIs 200
+      -- an account name that parses but leaves the transaction unbalanced
+      request $ do
+        setMethod "POST"
+        setUrl AddR
+        addToken  -- from the add form on the page just fetched
+        addPostParam "_formid" "identify-add"
+        addPostParam "date" "2025-02-02"
+        addPostParam "description" "xsstest"
+        addPostParam "account" "x<img src=x onerror=alert(1)>"
+        addPostParam "amount" "5"
+        addPostParam "account" "equity:opening"
+        addPostParam "amount" "-3"
+      bodyContains "&lt;img src=x onerror"       -- the value, escaped
+      bodyNotContains "<img src=x onerror"       -- and never as raw html
+
   -- #2127
   -- XXX I'm pretty sure this test lies, ie does not match production behaviour.
   -- (test with curl -s http://localhost:5000/journal | rg '(href)="[\w/].*?"' -o )
