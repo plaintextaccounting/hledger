@@ -122,6 +122,17 @@ instance Yesod App where
     let sessionexpirysecs = 120
     Just <$> defaultClientSessionBackend sessionexpirysecs (hledgerdata </> "hledger-web_client_session_key.aes")
 
+  -- Add some conservative security headers to every response.
+  -- X-Frame-Options stops the pages being framed (clickjacking of the add and
+  -- edit forms); X-Content-Type-Options stops the browser from guessing a
+  -- content type other than the one we send. A Content-Security-Policy would
+  -- be the bigger win, but the pages still rely on inline scripts, so a strict
+  -- one needs more work (nonces) and is left for later.
+  yesodMiddleware handler = defaultYesodMiddleware $ do
+    addHeader "X-Frame-Options" "SAMEORIGIN"
+    addHeader "X-Content-Type-Options" "nosniff"
+    handler
+
   -- defaultLayout :: WidgetFor site () -> HandlerFor site Html
   defaultLayout widget = do
 
