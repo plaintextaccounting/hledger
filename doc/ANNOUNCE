@@ -1,9 +1,9 @@
-I'm pleased to announce hledger-1.52.1.
-This is a small release adjusting the G account type and adding the U account type,
-for better compatibility between hledger 1 and 2.
+I'm not quite so pleased to announce hledger 1.52.2.
+This contains only a fix for an XSS vulnerability in hledger-web.
+All hledger-web users should upgrade, to avoid this bug.
 
-- https://github.com/simonmichael/hledger/releases/1.52.1
-- https://hledger.org/relnotes.html#2026-04-28-hledger-1521
+- https://github.com/simonmichael/hledger/releases/1.52.2
+- https://hledger.org/relnotes.html#2026-08-24-hledger-1522
 - https://hledger.org/install
 
 #hledger is free, robust, friendly, fast, cross-platform, double-entry, multi-currency, multi-interface, GNU GPL-licensed, #plaintextaccounting software.
