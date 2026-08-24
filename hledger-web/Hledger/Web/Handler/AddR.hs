@@ -11,6 +11,7 @@ module Hledger.Web.Handler.AddR
   ) where
 
 import Data.Aeson.Types (Result(..))
+import Data.List (intersperse)
 import Data.Text qualified as T
 import Network.HTTP.Types.Status (status400)
 import Text.Blaze.Html (preEscapedToHtml)
@@ -44,7 +45,11 @@ postAddR = do
       redirect JournalR
     FormMissing -> showForm view enctype
     FormFailure errs -> do
-      mapM_ (setMessage . preEscapedToHtml . T.replace "\n" "<br>") errs
+      -- Escape each error, then join the lines with <br>. An unbalanced
+      -- transaction's error embeds an excerpt of the submitted entry (account
+      -- names, amounts), so it must be escaped; only the <br> we insert is
+      -- raw. (Cf EditR, which uses toHtml.)
+      mapM_ (setMessage . mconcat . intersperse (preEscapedToHtml ("<br>" :: T.Text)) . map toHtml . T.lines) errs
       showForm view enctype
   where
     showForm view enctype =
