@@ -24,7 +24,7 @@ accounting and a simple, editable file format.  hledger is inspired by
 and largely compatible with ledger(1), and largely interconvertible with
 beancount(1).
 
-   This manual is for hledger's command line interface, version 1.52.
+   This manual is for hledger's command line interface, version 1.52.1.
 It also describes the common options, file formats and concepts used by
 all hledger programs.  It might accidentally teach you some
 bookkeeping/accounting as well!  You don't need to know everything in
@@ -1395,7 +1395,7 @@ part.
 * Account names::
 * Amounts::
 * Costs::
-* Cost basis / lot syntax::
+* Cost basis::
 * Balance assertions::
 * Posting comments::
 * Transaction balancing::
@@ -2077,7 +2077,7 @@ hledger displays them in output.  This is explained in Commodity display
 style below.
 
 
-File: hledger.info,  Node: Costs,  Next: Cost basis / lot syntax,  Prev: Amounts,  Up: Journal
+File: hledger.info,  Node: Costs,  Next: Cost basis,  Prev: Amounts,  Up: Journal
 
 8.12 Costs
 ==========
@@ -2178,10 +2178,10 @@ you'll get an error message saying that the transaction is unbalanced.):
 advantages of both.
 
 
-File: hledger.info,  Node: Cost basis / lot syntax,  Next: Balance assertions,  Prev: Costs,  Up: Journal
+File: hledger.info,  Node: Cost basis,  Next: Balance assertions,  Prev: Costs,  Up: Journal
 
-8.13 Cost basis / lot syntax
-============================
+8.13 Cost basis
+===============
 
 If you are buying some commodity to hold as an investment, it may be
 important to keep track of
@@ -2194,32 +2194,35 @@ important to keep track of
 
    In hledger we call these three the "cost basis"; and if an amount
 being acquired has a cost basis, we call it a "lot".  Tax authorities
-often require that lots are tracked carefully and disposed of (sold) in
-a certain order.
+sometimes require that lots are tracked in detail and disposed of (sold)
+in a certain order.
 
    Note, though "cost basis" sounds similar to the "cost" (transacted
 price) discussed above, they are distinct concepts.  In some
 transactions the transacted price and basis cost are the same, but in
-others they are not.
+others they are not.  So cost basis is recorded with its own syntax,
+called "cost basis annotations".
 
-   So cost basis has its own syntax, also called "lot syntax".
-hledger's lot syntax is like Ledger's: one or more of the following
-annotations, following the main amount:
+   hledger 1.x supports Ledger-style cost basis syntax: one or more of
+the following annotations, following the main amount:
 
    * '{LOTUNITCOST}' or '{{LOTTOTALCOST}}' (see lot price)
    * '[LOTDATE]' (see lot date)
    * '(LOTLABEL)' (see lot note)
 
-   hledger does not yet do anything with this lot syntax, except to
-preserve it and show it in 'print''s 'txt', 'beancount', and 'json'
-output.  This means you can use this syntax in your hledger journals
-(plus an amountless extra posting to help transactions balance, if
-needed), then use the 'print' command to export to Ledger or Beancount
-or rustledger, to use their lots/gains reports (see Export Lots
-workflow).
+   hledger 1 does not provide automated lot/gains tracking, and ignores
+these cost basis annotations.  But it will preserve and show them in
+'print''s 'txt', 'beancount', and 'json' output.  This means you can use
+this syntax in your journal (perhaps with an amountless extra posting to
+help transactions balance, if needed), then export to Ledger or
+Beancount or rustledger to do lots/gains reporting.  See Export Lots
+workflow.
+
+   (hledger 2.x has lots/gains reporting built in.  It also supports a
+more convenient Beancount-like '{DATE, "LABEL", COST}' syntax.)
 
 
-File: hledger.info,  Node: Balance assertions,  Next: Posting comments,  Prev: Cost basis / lot syntax,  Up: Journal
+File: hledger.info,  Node: Balance assertions,  Next: Posting comments,  Prev: Cost basis,  Up: Journal
 
 8.14 Balance assertions
 =======================
@@ -2973,11 +2976,20 @@ hledger knows that in accounting there are three main account types:
                                                   Equity)
 'Gain'                   'G'                      capital gains/losses
                                                   (subtype of Revenue)
+'UnrealisedGain'         'U'                      accumulated unrealised
+                                                  capital gains/losses
+                                                  (subtype of Equity)
 
    As a convenience, hledger will detect most of these types
-automatically from english account names.  But it's better to declare
-them explicitly by adding a 'type:' tag in the account directives.  The
-tag's value can be any of the types or one-letter abbreviations above.
+automatically from english account names.  (All except Gain and
+UnrealisedGain, which must be declared explicitly.)  But it's better to
+declare them explicitly by adding a 'type:' tag in the account
+directives.  The tag's value can be any of the types or one-letter
+abbreviations above.
+
+   hledger 1 does nothing special with 'Gain' and 'UnrealisedGain'
+accounts; they are supported mainly so that journals written for hledger
+2 (which uses them for lot/gain tracking) can be read without errors.
 
    Here is a typical set of account type declarations.  Subaccounts will
 inherit their parent's type, or can override it:
@@ -2993,7 +3005,7 @@ account assets:cash        ; type: C
 
 account equity:conversion  ; type: V
 
-account revenues:capital   ; type: G
+account revenues:gains     ; type: G
 
    This enables the easy balancesheet, balancesheetequity, cashflow and
 incomestatement reports, and querying by type:.
@@ -13486,410 +13498,410 @@ See hledger and Ledger for full details.
 
 Tag Table:
 Node: Top208
-Node: PART 1 USER INTERFACE4090
-Node: Input4229
-Node: Text encoding5321
-Node: Data formats6070
-Node: Standard input7804
-Node: Multiple files8193
-Node: Strict mode8930
-Node: Commands9764
-Node: Add-on commands11046
-Node: Options12097
-Node: Special characters19247
-Node: Escaping shell special characters20237
-Node: Escaping regular expression special characters21596
-Node: Escaping in other situations23111
-Node: Unicode characters24259
-Node: Regular expressions25680
-Node: hledger's regular expressions28939
-Node: Argument files30610
-Node: Config files31507
-Node: Shell completions34776
-Node: Output35265
-Node: Output destination35456
-Node: Output format36014
-Node: Text output37800
-Node: Box-drawing characters38784
-Node: Colour39284
-Node: Paging39870
-Node: HTML output41411
-Node: CSV / TSV output41829
-Node: FODS output42083
-Node: Beancount output42887
-Node: Beancount account names44388
-Node: Beancount commodity names44929
-Node: Beancount virtual postings45576
-Node: Beancount metadata45892
-Node: Beancount costs46672
-Node: Beancount operating currency47088
-Node: SQL output47538
-Node: JSON output48329
-Node: Commodity styles49146
-Node: Debug output50156
-Node: Environment50988
-Node: PART 2 DATA FORMATS52157
-Node: Journal52300
-Node: Journal cheatsheet54803
-Node: Comments61054
-Node: Transactions61998
-Node: Dates63135
-Node: Simple dates63287
-Node: Posting dates63903
-Node: Status65076
-Node: Code66842
-Node: Description67461
-Node: Payee and note68148
-Node: Transaction comments69239
-Node: Postings69755
-Node: Debits and credits71071
-Node: Account names71630
-Node: Two space delimiter72587
-Node: Account hierarchy73992
-Node: Other account name features74875
-Node: Amounts75293
-Node: Decimal marks76299
-Node: Digit group marks77403
-Node: Commodity78038
-Node: Costs79141
-Node: Cost basis / lot syntax82710
-Node: Balance assertions84373
-Node: Assertions and ordering85637
-Node: Assertions and multiple files86356
-Node: Assertions and costs87524
-Node: Assertions and commodities88171
-Node: Assertions and subaccounts89830
-Node: Assertions and status90490
-Node: Assertions and virtual postings90910
-Node: Assertions and auto postings91275
-Node: Assertions and precision92150
-Node: Assertions and hledger add92634
-Node: Posting comments93382
-Node: Transaction balancing93922
-Node: Tags96130
-Node: Tag propagation97649
-Node: Displaying tags99148
-Node: When to use tags ?99541
-Node: Tag names100205
-Node: Directives102204
-Node: Directives and multiple files103661
-Node: Directive effects104606
-Node: account directive107762
-Node: Account comments109229
-Node: Account tags109816
-Node: Account error checking110225
-Node: Account display order111758
-Node: Account types112956
-Node: alias directive116660
-Node: Basic aliases117871
-Node: Regex aliases118746
-Node: Combining aliases119793
-Node: Aliases and multiple files121247
-Node: end aliases directive122030
-Node: Aliases can generate bad account names122398
-Node: Aliases and account types123231
-Node: commodity directive124123
-Node: Commodity directive syntax125935
-Node: Commodity tags127501
-Node: Commodity error checking127979
-Node: decimal-mark directive128442
-Node: include directive129021
-Node: P directive131244
-Node: payee directive132278
-Node: tag directive132903
-Node: Periodic transactions133518
-Node: Periodic rule syntax135672
-Node: Periodic rules and relative dates136495
-Node: Two spaces between period expression and description!137272
-Node: Auto postings138233
-Node: Auto postings and multiple files141519
-Node: Auto postings and dates141924
-Node: Auto postings and transaction balancing / inferred amounts / balance assertions142365
-Node: Auto posting tags143211
-Node: Auto postings on forecast transactions only144106
-Node: Other syntax144576
-Node: Balance assignments145393
-Node: Balance assignments and costs146921
-Node: Balance assignments and multiple files147343
-Node: Bracketed posting dates147766
-Node: D directive148464
-Node: apply account directive150240
-Node: Y directive151107
-Node: Secondary dates152098
-Node: Star comments153583
-Node: Valuation expressions154275
-Node: Virtual postings154574
-Node: Other Ledger directives156198
-Node: Ledger virtual costs156956
-Node: Ledger lot syntax157298
-Node: Ledger fixed lot costs158151
-Node: CSV159721
-Node: CSV rules cheatsheet161921
-Node: source164219
-Node: Data cleaning / data generating commands165623
-Node: archive167522
-Node: encoding168450
-Node: separator169493
-Node: skip170146
-Node: date-format170796
-Node: timezone171741
-Node: newest-first172867
-Node: intra-day-reversed173580
-Node: decimal-mark174182
-Node: CSV fields and hledger fields174680
-Node: fields list176556
-Node: Field assignment178381
-Node: Field names179600
-Node: date field180932
-Node: date2 field181096
-Node: status field181291
-Node: code field181481
-Node: description field181669
-Node: comment field181886
-Node: account field182443
-Node: amount field183161
-Node: currency field186000
-Node: balance field186408
-Node: if block186931
-Node: Matchers188458
-Node: Multiple matchers190361
-Node: Match groups191169
-Node: if table192062
-Node: balance-type194125
-Node: include194952
-Node: Working with CSV195521
-Node: Rapid feedback196110
-Node: Valid CSV196693
-Node: File Extension197569
-Node: Reading CSV from standard input198304
-Node: Reading multiple CSV files198690
-Node: Reading files specified by rule199166
-Node: Valid transactions200563
-Node: Deduplicating importing201388
-Node: Regular expressions in CSV rules202634
-Node: Setting amounts204126
-Node: Amount signs206664
-Node: Setting currency/commodity207729
-Node: Amount decimal places209105
-Node: Referencing other fields210362
-Node: How CSV rules are evaluated211470
-Node: Well factored rules214187
-Node: CSV rules examples214677
-Node: Bank of Ireland214875
-Node: Coinbase216472
-Node: Amazon217655
-Node: Paypal219497
-Node: Timeclock227247
-Node: Timedot231300
-Node: Timedot examples234777
-Node: PART 3 REPORTING CONCEPTS237054
-Node: Time periods237218
-Node: Report start & end date237491
-Node: Smart dates238967
-Node: Report intervals241338
-Node: Date adjustments241912
-Node: Start date adjustment242132
-Node: End date adjustment243035
-Node: Period headings243816
-Node: Period expressions244749
-Node: Period expressions with a report interval246654
-Node: More complex report intervals247102
-Node: Multiple weekday intervals249218
-Node: Depth250229
-Node: Combining depth options251215
-Node: Queries252165
-Node: Query types254867
-Node: acct query255242
-Node: amt query255553
-Node: code query256250
-Node: cur query256445
-Node: desc query257051
-Node: date query257234
-Node: date2 query257848
-Node: depth query258189
-Node: note query258525
-Node: payee query258791
-Node: real query259072
-Node: status query259277
-Node: type query259517
-Node: tag query260075
-Node: Negative queries260704
-Node: not query260886
-Node: Space-separated queries261173
-Node: Boolean queries261861
-Node: expr query263179
-Node: any query263859
-Node: all query264312
-Node: Queries and command options264894
-Node: Queries and account aliases265342
-Node: Queries and valuation265667
-Node: Pivoting266029
-Node: Generating data268312
-Node: Forecasting270112
-Node: --forecast270768
-Node: Inspecting forecast transactions271869
-Node: Forecast reports273202
-Node: Forecast tags274311
-Node: Forecast period in detail274931
-Node: Forecast troubleshooting276019
-Node: Budgeting277090
-Node: Amount formatting277650
-Node: Commodity display style277894
-Node: Rounding279735
-Node: Trailing decimal marks280340
-Node: Amount parseability281273
-Node: Cost reporting282882
-Node: Recording costs283713
-Node: Reporting at cost285440
-Node: Equity conversion postings286205
-Node: Inferring equity conversion postings288850
-Node: Combining costs and equity conversion postings290096
-Node: Requirements for detecting equity conversion postings291321
-Node: Infer cost and equity by default ?292843
-Node: Value reporting293280
-Node: -X Value in specified commodity294238
-Node: -V Value in default commoditys295098
-Node: Valuation date295835
-Node: Finding market price296667
-Node: --infer-market-prices market prices from transactions298047
-Node: Valuation commodity301091
-Node: --value Flexible valuation302524
-Node: Valuation examples304367
-Node: Interaction of valuation and queries306511
-Node: Effect of valuation on reports307228
-Node: PART 4 COMMANDS315078
-Node: Help commands317867
-Node: commands318053
-Node: demo318261
-Node: help319354
-Node: User interface commands321059
-Node: repl321270
-Node: Examples323534
-Node: run324092
-Node: Examples 2326507
-Node: ui327531
-Node: web327668
-Node: Data entry commands327796
-Node: add328057
-Node: add and balance assertions330991
-Node: add and balance assignments331565
-Node: import332258
-Node: Import dry run333337
-Node: Overlap detection334285
-Node: First import337171
-Node: Importing balance assignments338366
-Node: Import and commodity styles339421
-Node: Import archiving339855
-Node: Import special cases340680
-Node: Deduplication340898
-Node: Varying file name341389
-Node: Multiple versions341773
-Node: Basic report commands342880
-Node: accounts343181
-Node: codes345693
-Node: commodities346715
-Node: descriptions347723
-Node: files348183
-Node: notes348480
-Node: payees348992
-Node: prices350149
-Node: stats351041
-Node: tags353099
-Node: Standard report commands354923
-Node: print355228
-Node: print amount explicitness357959
-Node: print alignment358897
-Node: print amount style359211
-Node: print parseability360441
-Node: print other features361718
-Node: print output format362680
-Node: aregister365965
-Node: aregister and posting dates370492
-Node: register371393
-Node: Custom register output379114
-Node: balancesheet380299
-Node: balancesheetequity385264
-Node: cashflow390599
-Node: incomestatement395412
-Node: Advanced report commands400261
-Node: balance400469
-Node: balance features405890
-Node: Simple balance report407993
-Node: Balance report line format409803
-Node: Filtered balance report412163
-Node: List or tree mode412682
-Node: Depth limiting414195
-Node: Dropping top-level accounts414962
-Node: Showing declared accounts415472
-Node: Sorting by amount416202
-Node: Percentages417056
-Node: Multi-period balance report417763
-Node: Balance change end balance420515
-Node: Balance report modes422152
-Node: Calculation mode422831
-Node: Accumulation mode423535
-Node: Valuation mode424636
-Node: Combining balance report modes425980
-Node: Budget report428010
-Node: Using the budget report430310
-Node: Budget date surprises432586
-Node: Selecting budget goals433950
-Node: Budgeting vs forecasting434898
-Node: Balance report layout436575
-Node: Wide layout437780
-Node: Tall layout440185
-Node: Bare layout441491
-Node: Tidy layout443555
-Node: Balance report output445099
-Node: Some useful balance reports445873
-Node: roi447133
-Node: Spaces and special characters in --inv and --pnl449380
-Node: Semantics of --inv and --pnl450106
-Node: IRR and TWR explained452193
-Node: Chart commands455604
-Node: activity455785
-Node: Data generation commands456282
-Node: close456488
-Node: close --clopen459553
-Node: close --close461449
-Node: close --open461973
-Node: close --assert462223
-Node: close --assign462550
-Node: close --retain463229
-Node: close customisation464086
-Node: close and balance assertions465764
-Node: close examples467286
-Node: Retain earnings467523
-Node: Migrate balances to a new file468026
-Node: More detailed close examples469388
-Node: rewrite469610
-Node: Re-write rules in a file472170
-Node: Diff output format473471
-Node: rewrite vs print --auto474741
-Node: Maintenance commands475455
-Node: check475674
-Node: Basic checks476757
-Node: Strict checks477823
-Node: Other checks478696
-Node: Custom checks480398
-Node: diff480837
-Node: setup482045
-Node: test484912
-Node: PART 5 COMMON TASKS485815
-Node: Getting help486264
-Node: Constructing command lines487165
-Node: Starting a journal file488030
-Node: Setting LEDGER_FILE489434
-Node: Set LEDGER_FILE on unix489722
-Node: Set LEDGER_FILE on mac490241
-Node: Set LEDGER_FILE on Windows490971
-Node: Setting opening balances492876
-Node: Recording transactions496218
-Node: Reconciling496963
-Node: Reporting499372
-Node: Migrating to a new file503506
-Node: BUGS503962
-Node: Troubleshooting504788
+Node: PART 1 USER INTERFACE4092
+Node: Input4231
+Node: Text encoding5323
+Node: Data formats6072
+Node: Standard input7806
+Node: Multiple files8195
+Node: Strict mode8932
+Node: Commands9766
+Node: Add-on commands11048
+Node: Options12099
+Node: Special characters19249
+Node: Escaping shell special characters20239
+Node: Escaping regular expression special characters21598
+Node: Escaping in other situations23113
+Node: Unicode characters24261
+Node: Regular expressions25682
+Node: hledger's regular expressions28941
+Node: Argument files30612
+Node: Config files31509
+Node: Shell completions34778
+Node: Output35267
+Node: Output destination35458
+Node: Output format36016
+Node: Text output37802
+Node: Box-drawing characters38786
+Node: Colour39286
+Node: Paging39872
+Node: HTML output41413
+Node: CSV / TSV output41831
+Node: FODS output42085
+Node: Beancount output42889
+Node: Beancount account names44390
+Node: Beancount commodity names44931
+Node: Beancount virtual postings45578
+Node: Beancount metadata45894
+Node: Beancount costs46674
+Node: Beancount operating currency47090
+Node: SQL output47540
+Node: JSON output48331
+Node: Commodity styles49148
+Node: Debug output50158
+Node: Environment50990
+Node: PART 2 DATA FORMATS52159
+Node: Journal52302
+Node: Journal cheatsheet54792
+Node: Comments61043
+Node: Transactions61987
+Node: Dates63124
+Node: Simple dates63276
+Node: Posting dates63892
+Node: Status65065
+Node: Code66831
+Node: Description67450
+Node: Payee and note68137
+Node: Transaction comments69228
+Node: Postings69744
+Node: Debits and credits71060
+Node: Account names71619
+Node: Two space delimiter72576
+Node: Account hierarchy73981
+Node: Other account name features74864
+Node: Amounts75282
+Node: Decimal marks76288
+Node: Digit group marks77392
+Node: Commodity78027
+Node: Costs79130
+Node: Cost basis82686
+Node: Balance assertions84497
+Node: Assertions and ordering85748
+Node: Assertions and multiple files86467
+Node: Assertions and costs87635
+Node: Assertions and commodities88282
+Node: Assertions and subaccounts89941
+Node: Assertions and status90601
+Node: Assertions and virtual postings91021
+Node: Assertions and auto postings91386
+Node: Assertions and precision92261
+Node: Assertions and hledger add92745
+Node: Posting comments93493
+Node: Transaction balancing94033
+Node: Tags96241
+Node: Tag propagation97760
+Node: Displaying tags99259
+Node: When to use tags ?99652
+Node: Tag names100316
+Node: Directives102315
+Node: Directives and multiple files103772
+Node: Directive effects104717
+Node: account directive107873
+Node: Account comments109340
+Node: Account tags109927
+Node: Account error checking110336
+Node: Account display order111869
+Node: Account types113067
+Node: alias directive117270
+Node: Basic aliases118481
+Node: Regex aliases119356
+Node: Combining aliases120403
+Node: Aliases and multiple files121857
+Node: end aliases directive122640
+Node: Aliases can generate bad account names123008
+Node: Aliases and account types123841
+Node: commodity directive124733
+Node: Commodity directive syntax126545
+Node: Commodity tags128111
+Node: Commodity error checking128589
+Node: decimal-mark directive129052
+Node: include directive129631
+Node: P directive131854
+Node: payee directive132888
+Node: tag directive133513
+Node: Periodic transactions134128
+Node: Periodic rule syntax136282
+Node: Periodic rules and relative dates137105
+Node: Two spaces between period expression and description!137882
+Node: Auto postings138843
+Node: Auto postings and multiple files142129
+Node: Auto postings and dates142534
+Node: Auto postings and transaction balancing / inferred amounts / balance assertions142975
+Node: Auto posting tags143821
+Node: Auto postings on forecast transactions only144716
+Node: Other syntax145186
+Node: Balance assignments146003
+Node: Balance assignments and costs147531
+Node: Balance assignments and multiple files147953
+Node: Bracketed posting dates148376
+Node: D directive149074
+Node: apply account directive150850
+Node: Y directive151717
+Node: Secondary dates152708
+Node: Star comments154193
+Node: Valuation expressions154885
+Node: Virtual postings155184
+Node: Other Ledger directives156808
+Node: Ledger virtual costs157566
+Node: Ledger lot syntax157908
+Node: Ledger fixed lot costs158761
+Node: CSV160331
+Node: CSV rules cheatsheet162531
+Node: source164829
+Node: Data cleaning / data generating commands166233
+Node: archive168132
+Node: encoding169060
+Node: separator170103
+Node: skip170756
+Node: date-format171406
+Node: timezone172351
+Node: newest-first173477
+Node: intra-day-reversed174190
+Node: decimal-mark174792
+Node: CSV fields and hledger fields175290
+Node: fields list177166
+Node: Field assignment178991
+Node: Field names180210
+Node: date field181542
+Node: date2 field181706
+Node: status field181901
+Node: code field182091
+Node: description field182279
+Node: comment field182496
+Node: account field183053
+Node: amount field183771
+Node: currency field186610
+Node: balance field187018
+Node: if block187541
+Node: Matchers189068
+Node: Multiple matchers190971
+Node: Match groups191779
+Node: if table192672
+Node: balance-type194735
+Node: include195562
+Node: Working with CSV196131
+Node: Rapid feedback196720
+Node: Valid CSV197303
+Node: File Extension198179
+Node: Reading CSV from standard input198914
+Node: Reading multiple CSV files199300
+Node: Reading files specified by rule199776
+Node: Valid transactions201173
+Node: Deduplicating importing201998
+Node: Regular expressions in CSV rules203244
+Node: Setting amounts204736
+Node: Amount signs207274
+Node: Setting currency/commodity208339
+Node: Amount decimal places209715
+Node: Referencing other fields210972
+Node: How CSV rules are evaluated212080
+Node: Well factored rules214797
+Node: CSV rules examples215287
+Node: Bank of Ireland215485
+Node: Coinbase217082
+Node: Amazon218265
+Node: Paypal220107
+Node: Timeclock227857
+Node: Timedot231910
+Node: Timedot examples235387
+Node: PART 3 REPORTING CONCEPTS237664
+Node: Time periods237828
+Node: Report start & end date238101
+Node: Smart dates239577
+Node: Report intervals241948
+Node: Date adjustments242522
+Node: Start date adjustment242742
+Node: End date adjustment243645
+Node: Period headings244426
+Node: Period expressions245359
+Node: Period expressions with a report interval247264
+Node: More complex report intervals247712
+Node: Multiple weekday intervals249828
+Node: Depth250839
+Node: Combining depth options251825
+Node: Queries252775
+Node: Query types255477
+Node: acct query255852
+Node: amt query256163
+Node: code query256860
+Node: cur query257055
+Node: desc query257661
+Node: date query257844
+Node: date2 query258458
+Node: depth query258799
+Node: note query259135
+Node: payee query259401
+Node: real query259682
+Node: status query259887
+Node: type query260127
+Node: tag query260685
+Node: Negative queries261314
+Node: not query261496
+Node: Space-separated queries261783
+Node: Boolean queries262471
+Node: expr query263789
+Node: any query264469
+Node: all query264922
+Node: Queries and command options265504
+Node: Queries and account aliases265952
+Node: Queries and valuation266277
+Node: Pivoting266639
+Node: Generating data268922
+Node: Forecasting270722
+Node: --forecast271378
+Node: Inspecting forecast transactions272479
+Node: Forecast reports273812
+Node: Forecast tags274921
+Node: Forecast period in detail275541
+Node: Forecast troubleshooting276629
+Node: Budgeting277700
+Node: Amount formatting278260
+Node: Commodity display style278504
+Node: Rounding280345
+Node: Trailing decimal marks280950
+Node: Amount parseability281883
+Node: Cost reporting283492
+Node: Recording costs284323
+Node: Reporting at cost286050
+Node: Equity conversion postings286815
+Node: Inferring equity conversion postings289460
+Node: Combining costs and equity conversion postings290706
+Node: Requirements for detecting equity conversion postings291931
+Node: Infer cost and equity by default ?293453
+Node: Value reporting293890
+Node: -X Value in specified commodity294848
+Node: -V Value in default commoditys295708
+Node: Valuation date296445
+Node: Finding market price297277
+Node: --infer-market-prices market prices from transactions298657
+Node: Valuation commodity301701
+Node: --value Flexible valuation303134
+Node: Valuation examples304977
+Node: Interaction of valuation and queries307121
+Node: Effect of valuation on reports307838
+Node: PART 4 COMMANDS315688
+Node: Help commands318477
+Node: commands318663
+Node: demo318871
+Node: help319964
+Node: User interface commands321669
+Node: repl321880
+Node: Examples324144
+Node: run324702
+Node: Examples 2327117
+Node: ui328141
+Node: web328278
+Node: Data entry commands328406
+Node: add328667
+Node: add and balance assertions331601
+Node: add and balance assignments332175
+Node: import332868
+Node: Import dry run333947
+Node: Overlap detection334895
+Node: First import337781
+Node: Importing balance assignments338976
+Node: Import and commodity styles340031
+Node: Import archiving340465
+Node: Import special cases341290
+Node: Deduplication341508
+Node: Varying file name341999
+Node: Multiple versions342383
+Node: Basic report commands343490
+Node: accounts343791
+Node: codes346303
+Node: commodities347325
+Node: descriptions348333
+Node: files348793
+Node: notes349090
+Node: payees349602
+Node: prices350759
+Node: stats351651
+Node: tags353709
+Node: Standard report commands355533
+Node: print355838
+Node: print amount explicitness358569
+Node: print alignment359507
+Node: print amount style359821
+Node: print parseability361051
+Node: print other features362328
+Node: print output format363290
+Node: aregister366575
+Node: aregister and posting dates371102
+Node: register372003
+Node: Custom register output379724
+Node: balancesheet380909
+Node: balancesheetequity385874
+Node: cashflow391209
+Node: incomestatement396022
+Node: Advanced report commands400871
+Node: balance401079
+Node: balance features406500
+Node: Simple balance report408603
+Node: Balance report line format410413
+Node: Filtered balance report412773
+Node: List or tree mode413292
+Node: Depth limiting414805
+Node: Dropping top-level accounts415572
+Node: Showing declared accounts416082
+Node: Sorting by amount416812
+Node: Percentages417666
+Node: Multi-period balance report418373
+Node: Balance change end balance421125
+Node: Balance report modes422762
+Node: Calculation mode423441
+Node: Accumulation mode424145
+Node: Valuation mode425246
+Node: Combining balance report modes426590
+Node: Budget report428620
+Node: Using the budget report430920
+Node: Budget date surprises433196
+Node: Selecting budget goals434560
+Node: Budgeting vs forecasting435508
+Node: Balance report layout437185
+Node: Wide layout438390
+Node: Tall layout440795
+Node: Bare layout442101
+Node: Tidy layout444165
+Node: Balance report output445709
+Node: Some useful balance reports446483
+Node: roi447743
+Node: Spaces and special characters in --inv and --pnl449990
+Node: Semantics of --inv and --pnl450716
+Node: IRR and TWR explained452803
+Node: Chart commands456214
+Node: activity456395
+Node: Data generation commands456892
+Node: close457098
+Node: close --clopen460163
+Node: close --close462059
+Node: close --open462583
+Node: close --assert462833
+Node: close --assign463160
+Node: close --retain463839
+Node: close customisation464696
+Node: close and balance assertions466374
+Node: close examples467896
+Node: Retain earnings468133
+Node: Migrate balances to a new file468636
+Node: More detailed close examples469998
+Node: rewrite470220
+Node: Re-write rules in a file472780
+Node: Diff output format474081
+Node: rewrite vs print --auto475351
+Node: Maintenance commands476065
+Node: check476284
+Node: Basic checks477367
+Node: Strict checks478433
+Node: Other checks479306
+Node: Custom checks481008
+Node: diff481447
+Node: setup482655
+Node: test485522
+Node: PART 5 COMMON TASKS486425
+Node: Getting help486874
+Node: Constructing command lines487775
+Node: Starting a journal file488640
+Node: Setting LEDGER_FILE490044
+Node: Set LEDGER_FILE on unix490332
+Node: Set LEDGER_FILE on mac490851
+Node: Set LEDGER_FILE on Windows491581
+Node: Setting opening balances493486
+Node: Recording transactions496828
+Node: Reconciling497573
+Node: Reporting499982
+Node: Migrating to a new file504116
+Node: BUGS504572
+Node: Troubleshooting505398
 
 End Tag Table
 

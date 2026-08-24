@@ -1,6 +1,6 @@
 .\"t
 
-.TH "HLEDGER" "1" "March 2026" "hledger-1.52 " "hledger User Manuals"
+.TH "HLEDGER" "1" "August 2026" "hledger-1.52.1 " "hledger User Manuals"
 
 
 
@@ -17,9 +17,6 @@ or
 .P
 .PD
 \f[CR]hledger COMMAND [OPTS] [ARGS]\f[R]
-.PD 0
-.P
-.PD
 .SH DESCRIPTION
 hledger is a robust, user\-friendly, cross\-platform set of programs for
 tracking money, time, or any other commodity, using double\-entry
@@ -27,7 +24,7 @@ accounting and a simple, editable file format.
 hledger is inspired by and largely compatible with ledger(1), and
 largely interconvertible with beancount(1).
 .PP
-This manual is for hledger\(aqs command line interface, version 1.52.
+This manual is for hledger\(aqs command line interface, version 1.52.1.
 It also describes the common options, file formats and concepts used by
 all hledger programs.
 It might accidentally teach you some bookkeeping/accounting as well!
@@ -2195,7 +2192,7 @@ unbalanced.):
 So in principle you could enable both \f[CR]\-\-infer\-equity\f[R] and
 \f[CR]\-\-infer\-costs\f[R] in your config file, and your reports would
 have the advantages of both.
-.SS Cost basis / lot syntax
+.SS Cost basis
 If you are buying some commodity to hold as an investment, it may be
 important to keep track of
 .IP "1." 3
@@ -2209,16 +2206,17 @@ reference.
 .PP
 In hledger we call these three the \(dqcost basis\(dq; and if an amount
 being acquired has a cost basis, we call it a \(dqlot\(dq.
-Tax authorities often require that lots are tracked carefully and
+Tax authorities sometimes require that lots are tracked in detail and
 disposed of (sold) in a certain order.
 .PP
 Note, though \(dqcost basis\(dq sounds similar to the \(dqcost\(dq
 (transacted price) discussed above, they are distinct concepts.
 In some transactions the transacted price and basis cost are the same,
 but in others they are not.
+So cost basis is recorded with its own syntax, called \(dqcost basis
+annotations\(dq.
 .PP
-So cost basis has its own syntax, also called \(dqlot syntax\(dq.
-hledger\(aqs lot syntax is like Ledger\(aqs: one or more of the
+hledger 1.x supports Ledger\-style cost basis syntax: one or more of the
 following annotations, following the main amount:
 .IP \(bu 2
 \f[CR]{LOTUNITCOST}\f[R] or \f[CR]{{LOTTOTALCOST}}\f[R] (see lot price)
@@ -2227,13 +2225,18 @@ following annotations, following the main amount:
 .IP \(bu 2
 \f[CR](LOTLABEL)\f[R] (see lot note)
 .PP
-hledger does not yet do anything with this lot syntax, except to
-preserve it and show it in \f[CR]print\f[R]\(aqs \f[CR]txt\f[R],
-\f[CR]beancount\f[R], and \f[CR]json\f[R] output.
-This means you can use this syntax in your hledger journals (plus an
+hledger 1 does not provide automated lot/gains tracking, and ignores
+these cost basis annotations.
+But it will preserve and show them in \f[CR]print\f[R]\(aqs
+\f[CR]txt\f[R], \f[CR]beancount\f[R], and \f[CR]json\f[R] output.
+This means you can use this syntax in your journal (perhaps with an
 amountless extra posting to help transactions balance, if needed), then
-use the \f[CR]print\f[R] command to export to Ledger or Beancount or
-rustledger, to use their lots/gains reports (see Export Lots workflow).
+export to Ledger or Beancount or rustledger to do lots/gains reporting.
+See Export Lots workflow.
+.PP
+(hledger 2.x has lots/gains reporting built in.
+It also supports a more convenient Beancount\-like
+\f[CR]{DATE, \(dqLABEL\(dq, COST}\f[R] syntax.)
 .SS Balance assertions
 hledger supports Ledger\-style balance assertions in journal files.
 These look like, for example, \f[CR]= EXPECTEDBALANCE\f[R] following a
@@ -3143,14 +3146,27 @@ T}@T{
 T}@T{
 capital gains/losses (subtype of Revenue)
 T}
+T{
+\f[CR]UnrealisedGain\f[R]
+T}@T{
+\f[CR]U\f[R]
+T}@T{
+accumulated unrealised capital gains/losses (subtype of Equity)
+T}
 .TE
 .PP
 As a convenience, hledger will detect most of these types automatically
 from english account names.
+(All except Gain and UnrealisedGain, which must be declared explicitly.)
 But it\(aqs better to declare them explicitly by adding a
 \f[CR]type:\f[R] tag in the account directives.
 The tag\(aqs value can be any of the types or one\-letter abbreviations
 above.
+.PP
+hledger 1 does nothing special with \f[CR]Gain\f[R] and
+\f[CR]UnrealisedGain\f[R] accounts; they are supported mainly so that
+journals written for hledger 2 (which uses them for lot/gain tracking)
+can be read without errors.
 .PP
 Here is a typical set of account type declarations.
 Subaccounts will inherit their parent\(aqs type, or can override it:
@@ -3167,7 +3183,7 @@ account assets:cash        ; type: C
 
 account equity:conversion  ; type: V
 
-account revenues:capital   ; type: G
+account revenues:gains     ; type: G
 .EE
 .PP
 This enables the easy balancesheet, balancesheetequity, cashflow and
