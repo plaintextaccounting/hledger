@@ -44,6 +44,11 @@ module Hledger.Web.Test (
 import Data.String (fromString)
 import Data.Function ((&))
 import Data.Text qualified as T
+import Data.Text.IO qualified as TIO
+import Data.Text.Lazy qualified as TL
+import Data.Text.Lazy.Encoding qualified as TLE
+import System.Directory (getTemporaryDirectory)
+import System.FilePath ((</>))
 import Test.Hspec (hspec)
 import Yesod.Default.Config
 import Yesod.Test
@@ -84,6 +89,31 @@ runTests testsdesc rawopts j tests = do
         }
   app <- makeAppWith j yconf wopts
   hspec $ yesodSpec app $ ydescribe testsdesc tests    -- https://hackage.haskell.org/package/yesod-test/docs/Yesod-Test.html
+
+-- | Assert that a journal file on disk does not contain the given text,
+-- ie that a request which should have been refused did not write to it.
+journalFileLacks :: FilePath -> T.Text -> YesodExample App ()
+journalFileLacks f t = do
+  txt <- liftIO $ TIO.readFile f
+  assertEq (f ++ " should not contain " ++ T.unpack t) (T.isInfixOf t txt) False
+
+-- | The name of the edit form's textarea in the current page. The edit form
+-- does not name that field, so yesod generates one (eg "f1"); find it rather
+-- than hardcode it, or a post can silently do nothing.
+editFieldName :: YesodExample App T.Text
+editFieldName = do
+  els <- htmlQuery "textarea"
+  case els of
+    [] -> error' "no textarea in the edit form"
+    (e:_) -> do
+      let needle = "name=\""
+          html = TL.toStrict (TLE.decodeUtf8 e)
+          (_, fromneedle) = T.breakOn needle html
+          afterneedle = T.drop (T.length needle) fromneedle
+          fieldname = T.takeWhile (/= '"') afterneedle
+      if T.null fromneedle
+        then error' "the edit form's textarea has no name"
+        else return fieldname
 
 -- | Run hledger-web's built-in tests using the hspec test runner.
 hledgerWebTest :: IO ()
@@ -167,4 +197,117 @@ hledgerWebTest = do
   --     statusIs 200
   --     bodyContains "href=\"https://base"
   --     bodyContains "src=\"https://files"
+
+  -- Tests for the write side: yesod's CSRF protection, and the restriction of
+  -- file access to the journal's own files. These use a journal in a temp file,
+  -- so that if one of these protections ever fails, the test writes there
+  -- rather than to the journal the developer happens to have configured.
+  tmpdir <- getTemporaryDirectory
+  let
+    jfile = tmpdir </> "hledger-web-test.journal"
+    jtext = T.pack $ unlines
+      ["2025-01-01 gift"
+      ,"    assets:bank:checking      10"
+      ,"    income:gifts"
+      ]
+    -- A path is only editable if it is one of the journal's own files, so
+    -- these must all be refused however they are spelled.
+    otherfiles =
+      ["/etc/passwd"
+      ,"../../../../etc/passwd"
+      ,"....//....//etc/passwd"
+      ,jfile ++ "/../../etc/passwd"
+      ]
+  TIO.writeFile jfile jtext
+  let wiopts = rawOptsToInputOpts d usecolor $ mkRawOpts [("file", jfile)]
+  wpj <- readJournal'' jtext
+  wj <- fmap (either error' id) . runExceptT $ journalFinalise wiopts jfile jtext wpj
+  runTests "hledger-web write requests" [("file", jfile), ("allow", "edit")] wj $ do
+
+    yit "puts a CSRF token in the add form" $ do
+      get JournalR
+      statusIs 200
+      bodyContains "name=\"_token\""
+
+    -- These three post the same valid, balanced transaction, and differ only
+    -- in the CSRF token, so that the two failures can only be about the token.
+    -- The form is wrapped in identifyForm, so _formid must be sent too, or the
+    -- post is ignored as FormMissing and these would pass either way.
+    let postTransaction desc = do
+          setMethod "POST"
+          setUrl AddR
+          addPostParam "_formid" "identify-add"
+          addPostParam "date" "2025-02-02"
+          addPostParam "description" desc
+          addPostParam "account" "assets:bank:checking"
+          addPostParam "amount" "1"
+          addPostParam "account" "income:gifts"
+          addPostParam "amount" ""
+
+    yit "does not add a transaction when the CSRF token is missing" $ do
+      request $ postTransaction "CsrfNoToken"
+      bodyNotContains "Transaction added"
+      journalFileLacks jfile "CsrfNoToken"
+
+    yit "does not add a transaction when the CSRF token is wrong" $ do
+      request $ do
+        postTransaction "CsrfBadToken"
+        addPostParam "_token" "not-the-token"
+      bodyNotContains "Transaction added"
+      journalFileLacks jfile "CsrfBadToken"
+
+    -- The control for the two tests above: the same request, with a real
+    -- token, is accepted. Without this they could pass for the wrong reason.
+    yit "adds a transaction when the CSRF token is present" $ do
+      get JournalR
+      statusIs 200
+      request $ do
+        postTransaction "CsrfGoodToken"
+        addToken  -- from the page just fetched
+      statusIs 303  -- a successful add redirects to the journal
+      _ <- followRedirect
+      bodyContains "Transaction added"
+      txt <- liftIO $ TIO.readFile jfile
+      assertEq "journal should contain the added transaction"
+        (T.isInfixOf "CsrfGoodToken" txt) True
+
+    -- Likewise for the edit form: the same save, with and without the token.
+    let editJournal fld desc = do
+          setMethod "POST"
+          setUrl (EditR jfile)
+          addPostParam "_formid" "identify-edit"
+          addPostParam fld $
+            "2025-03-03 " <> desc <> "\n    assets:bank:checking  1\n    income:gifts\n"
+
+    yit "does not save the journal when the CSRF token is missing" $ do
+      get (EditR jfile)
+      statusIs 200
+      fld <- editFieldName
+      request $ editJournal fld "CsrfEdit"
+      bodyNotContains "Saved journal"
+      journalFileLacks jfile "CsrfEdit"
+
+    yit "saves the journal when the CSRF token is present" $ do
+      get (EditR jfile)
+      statusIs 200
+      fld <- editFieldName
+      request $ do
+        editJournal fld "CsrfEditOk"
+        addToken  -- from the page just fetched
+      txt <- liftIO $ TIO.readFile jfile
+      assertEq "journal should contain the saved text"
+        (T.isInfixOf "CsrfEditOk" txt) True
+
+    yit "serves its own journal file for editing" $ do
+      get (EditR jfile)
+      statusIs 200
+
+    forM_ otherfiles $ \otherfile -> do
+      yit ("refuses to edit " ++ otherfile) $ do
+        get (EditR otherfile)
+        statusIs 404
+      yit ("refuses to download " ++ otherfile) $ do
+        get (DownloadR otherfile)
+        statusIs 404
+
 

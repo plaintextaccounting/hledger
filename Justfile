@@ -478,6 +478,12 @@ SHELLTEST := STACK + ' exec -- shelltest --execdir --threads=40'
 # --test so that subsequent `stack test` won't recompile everything
 # --no-run-tests to avoid running the slow doctest suite every time
 
+# run hledger-web's browser tests against the current build, with any playwright OPTS (needs setup, see hledger-web/test/browser/README.md)
+@browsertest *PWOPTS:
+    {{ STACK }} build hledger-web
+    cd hledger-web/test/browser && \
+        HLEDGER_WEB="{{ STACK }} exec -- hledger-web" pnpm test {{ PWOPTS }}
+
 # too fragile:
 #    echo
 #    just perftest {{ STOPTS }}
