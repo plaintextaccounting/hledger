@@ -123,7 +123,7 @@ function addformAddPosting() {
   // or it will recursively add helper elements for those, causing confusion (#2215).
   newrow.find('.tt-hint').remove();
   newrow.find('.tt-input').removeClass('tt-input');
-  accountfield.typeahead({ highlight: true }, { source: globalThis.accountsCompleter.ttAdapter() });
+  accountfield.typeahead({ highlight: true }, { source: globalThis.accountsCompleter.ttAdapter(), templates: { suggestion: globalThis.suggestionTemplate } });
 
   // Add the new row to the page.
   $('#addform .account-postings').append(newrow);

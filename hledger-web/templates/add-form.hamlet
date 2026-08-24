@@ -20,9 +20,16 @@
     });
     globalThis.accountsCompleter.initialize();
 
+    // use template to ensure proper escaping
+    globalThis.suggestionTemplate = function(d) {
+      var p = document.createElement('p');
+      p.textContent = d.value;
+      return p;
+    };
+
     // Attach the completers to the initial form inputs.
-    jQuery('input[name=description]').typeahead({ highlight: true }, { source: globalThis.descriptionsCompleter.ttAdapter() });
-    jQuery('input[name=account]'    ).typeahead({ highlight: true }, { source: globalThis.accountsCompleter.ttAdapter() });
+    jQuery('input[name=description]').typeahead({ highlight: true }, { source: globalThis.descriptionsCompleter.ttAdapter(), templates: { suggestion: globalThis.suggestionTemplate } });
+    jQuery('input[name=account]'    ).typeahead({ highlight: true }, { source: globalThis.accountsCompleter.ttAdapter(), templates: { suggestion: globalThis.suggestionTemplate } });
   });
 
   const utf8textdecoder = new TextDecoder();
