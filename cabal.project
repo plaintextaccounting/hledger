@@ -3,6 +3,11 @@ packages: hledger-lib
           hledger-ui
           hledger-web
 
+-- Build with aeson 2.3+, avoiding HSEC-2026-0007. persistent (pulled in via
+-- yesod-form) declares aeson <2.3; relax that bound until persistent updates.
+constraints: aeson >=2.3
+allow-newer: persistent:aeson
+
 -- cabal config suitable for working with ghc 9.14, for haskell-debugger
 -- with-compiler: ghc-9.14
 -- allow-newer: base,containers,ghc,ghc-bignum,template-haskell,time
