@@ -44,6 +44,13 @@ Fixes
   AI-assisted fixes in hledger 2, under the security exception in
   https://hledger.org/AI.html; they have been reviewed and tested.
 
+- hledger-web now requires aeson 2.3, avoiding a denial of service bug
+  in that library. Earlier versions, with /add enabled, are vulnerable
+  to HTTP requests which could trigger memory/CPU exhaustion. aeson 2.3
+  is not yet in stackage, so building from source may need an extra-dep;
+  and hledger-web is not currently buildable with ghc 9.6.
+  (<https://haskell.github.io/security-advisories/advisory/HSEC-2026-0007.html>)
+
 [#2700]: https://github.com/simonmichael/hledger/issues/2700
 [#2704]: https://github.com/simonmichael/hledger/issues/2704
 
