@@ -70,6 +70,24 @@ test.describe('journal data is rendered as text, not markup', () => {
     expect(await page.locator('#main-content img[src="x"]').count()).toBe(0);
   });
 
+  // The upload form names the file you picked. A filename is text the user
+  // supplies and can contain markup, so it is shown rather than parsed.
+  test('the upload form names the chosen file as text', async ({ page }) => {
+    const fs = require('fs'), os = require('os'), path = require('path');
+    const name = 'x<img src=x onerror="window.__upxss=1">.journal';
+    const file = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'hw-upload-')), name);
+    fs.writeFileSync(file, '2025-01-01 x\n    a  1\n    b\n');
+
+    await page.goto('/manage');
+    await page.locator('a.btn', { hasText: 'Upload' }).first().click();
+    await page.locator('#file').setInputFiles(file);
+
+    await expect(page.locator('#file-info')).toHaveText(name);
+    expect(await page.locator('#file-info img').count()).toBe(0);
+    expect(await xssFired(page)).toBe(false);
+    expect(await page.evaluate(() => window.__upxss)).toBeUndefined();
+  });
+
   test('the edit form shows journal text as text', async ({ page }) => {
     await page.goto('/manage');
     await page.locator('a.btn', { hasText: 'Edit' }).first().click();

@@ -75,6 +75,18 @@ document.addEventListener('DOMContentLoaded', function() {
     e.preventDefault();
   });
 
+  // Name the chosen file beside the upload button. Set as text, so a file whose
+  // name contains markup is shown, not parsed.
+  var fileinput = document.getElementById('file');
+  if (fileinput) {
+    fileinput.addEventListener('change', function() {
+      var info = document.getElementById('file-info');
+      if (info) {
+        info.textContent = fileinput.files[0] ? fileinput.files[0].name : '';
+      }
+    });
+  }
+
   document.querySelectorAll('[data-toggle="offcanvas"]').forEach(function(el) {
     el.addEventListener('click', function() {
       var row = document.querySelector('.row-offcanvas');
