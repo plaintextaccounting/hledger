@@ -18,6 +18,14 @@ General changes in the hledger project.
 For package-specific changes, see the hledger package changelogs.
 
 
+# 1.52.3 2026-08-27
+
+
+
+# 1.52.2 2026-08-24
+
+
+
 # 1.52.1 2026-04-28
 
 # 1.52 2026-03-20

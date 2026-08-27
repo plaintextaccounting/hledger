@@ -26,6 +26,14 @@ API
 User-visible changes in the hledger command line tool and library.
 
 
+# 1.52.3 2026-08-27
+
+
+
+# 1.52.2 2026-08-24
+
+
+
 # 1.52.1 2026-04-28
 
 Breaking changes

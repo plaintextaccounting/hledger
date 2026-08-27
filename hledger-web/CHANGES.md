@@ -23,6 +23,57 @@ User-visible changes in hledger-web.
 See also the hledger changelog.
 
 
+# 1.52.3 2026-08-27
+
+Fixes
+
+- Another XSS (cross-site scripting) vulnerability has been fixed, in
+  the add transaction form's error message. Any web page visited while
+  hledger-web was running could use it to run javascript in
+  hledger-web's origin, and from there read the whole journal, or
+  alter it. All hledger-web users should upgrade. See also:
+  GHSA-vq7r-8w52-jv84.  (Arthur Cinader, Simon Michael, [#2700])
+
+- A newline submitted in a transaction's description, code or account
+  name is no longer written into the journal file. This removes the
+  possibility of the user inserting an include directive, which could
+  expose system files readable by the hledger-web server. See also:
+  GHSA-vq7r-8w52-jv84.  [#2704]
+
+  Note: as with #2698 in 1.52.2, these fixes were backported from
+  AI-assisted fixes in hledger 2, under the security exception in
+  https://hledger.org/AI.html; they have been reviewed and tested.
+
+- hledger-web's official binaries, and builds from the hledger source
+  tree, now use aeson 2.3, avoiding a denial of service bug.
+  (<https://haskell.github.io/security-advisories/advisory/HSEC-2026-0007.html>)
+
+[#2700]: https://github.com/simonmichael/hledger/issues/2700
+[#2704]: https://github.com/simonmichael/hledger/issues/2704
+
+# 1.52.2 2026-08-24
+
+Fixes
+
+- An XSS (cross-site scripting) vulnerability has been fixed in the add
+  transaction form's autocomplete. Journal data from an untrusted source
+  could execute javascript when shown as a completion suggestion. All
+  hledger-web users are encouraged to upgrade. Full technical details:
+  GHSA-538p-cvc4-4qjm.
+  (Arthur Cinader, Simon Michael, #2698)
+  
+  Note: this bug was detected, and the original patch was generated, by
+  Arthur Cinader with AI assistance, for hledger 2.x.  Because the
+  vulnerability is in theory quite severe, and the fix is small and
+  obvious, and I don't want to add risk by redoing it from memory, and
+  no-one else volunteered promptly to do that work - and after
+  discussion in the chat and mail list (see today's thread), and careful
+  human review and testing - I manually backported the same fix to
+  hledger 1. And, updated the project's https://hledger.org/AI.html
+  policy to allow this for needed security-related fixes like this one
+  (which I expect to be very rare).
+
+
 # 1.52.1 2026-04-28
 
 Improvements
