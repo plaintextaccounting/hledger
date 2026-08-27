@@ -129,3 +129,4 @@ old
 .latest.*
 .github/workflows/ci-arm.yml
 /doc/ai/aicommits.csv
+/doc/ai/ai.unlogged
