@@ -5,8 +5,8 @@
 
 document.addEventListener('DOMContentLoaded', function() {
 
-  // Open and close the dialogs. bootstrap's data attributes are reused as
-  // hooks, so the templates that trigger them do not have to change.
+  // Open and close the dialogs. The data-toggle/data-target/data-dismiss
+  // attributes in the templates are the hooks.
   document.querySelectorAll('[data-toggle="modal"]').forEach(function(el) {
     el.addEventListener('click', function(e) {
       e.preventDefault();
@@ -96,8 +96,8 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // The entry targeted by the url hash is marked by a :target rule in
-// hledger.css. That needs no javascript, and unlike passing location.hash to
-// querySelector it cannot trip over the numeric ids that register rows use.
+// hledger.css, which needs no javascript. Note that register rows have
+// numeric ids, so location.hash must not be passed to querySelector.
 
 // The account sidebar's scroll position is preserved across page navigations
 // by an inline script right after the sidebar's markup in

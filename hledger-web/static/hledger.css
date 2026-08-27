@@ -55,9 +55,7 @@ body {
 /*------------------------------------------------------------------------------------------*/
 /* 5. the entry targeted by the url hash */
 
-/* Following a link to a transaction or posting marks it. This replaces
-   javascript that added a .highlighted class on load and on hashchange, which
-   no stylesheet ever styled, so nothing was ever marked. */
+/* Following a link to a transaction or posting marks it. */
 .table > tbody > tr:target > td,
 tr:target > td {
   background-color: #fcf8e3;
