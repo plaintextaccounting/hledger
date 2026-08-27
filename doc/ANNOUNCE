@@ -1,9 +1,10 @@
-I'm not quite so pleased to announce hledger 1.52.2.
-This contains only a fix for an XSS vulnerability in hledger-web.
-All hledger-web users should upgrade, to avoid this bug.
+hledger 1.52.3 contains more hledger-web security fixes, for an XSS
+vulnerability when the add form fails, and a bug allowing include
+directives to be inserted with only `add` permission.  All hledger-web
+users should upgrade.
 
-- https://github.com/simonmichael/hledger/releases/1.52.2
-- https://hledger.org/relnotes.html#2026-08-24-hledger-1522
+- https://github.com/simonmichael/hledger/releases/1.52.3
+- https://hledger.org/relnotes.html#2026-08-27-hledger-1523
 - https://hledger.org/install
 
 #hledger is free, robust, friendly, fast, cross-platform, double-entry, multi-currency, multi-interface, GNU GPL-licensed, #plaintextaccounting software.
