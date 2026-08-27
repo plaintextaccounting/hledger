@@ -65,9 +65,52 @@ Major releases and user-visible changes.
 
 
 
+
+## 2026-08-27 hledger-1.52.3
+### hledger 1.52.3
+
+- Uses hledger-lib 1.52.3.
+
+
+### hledger-ui 1.52.3
+
+- Uses hledger 1.52.3.
+
+
+### hledger-web 1.52.3
+
+
+Fixes
+
+- Another XSS (cross-site scripting) vulnerability has been fixed, in
+  the add transaction form's error message. Any web page visited while
+  hledger-web was running could use it to run javascript in
+  hledger-web's origin, and from there read the whole journal, or
+  alter it. All hledger-web users should upgrade. See also:
+  GHSA-vq7r-8w52-jv84.  (Arthur Cinader, Simon Michael, [#2700])
+
+- A newline submitted in a transaction's description, code or account
+  name is no longer written into the journal file. This removes the
+  possibility of the user inserting an include directive, which could
+  expose system files readable by the hledger-web server. See also:
+  GHSA-vq7r-8w52-jv84.  [#2704]
+
+  Note: as with #2698 in 1.52.2, these fixes were backported from
+  AI-assisted fixes in hledger 2, under the security exception in
+  https://hledger.org/AI.html; they have been reviewed and tested.
+
+[#2700]: https://github.com/simonmichael/hledger/issues/2700
+[#2704]: https://github.com/simonmichael/hledger/issues/2704
+
+
+### credits 1.52.3
+
+Simon Michael,
+Arthur Cinader.
+
+
+
 ## 2026-08-24 hledger-1.52.2
-
-
 ### hledger 1.52.2
 
 - Uses hledger-lib 1.52.2.
@@ -106,6 +149,7 @@ Fixes
 
 Simon Michael,
 Arthur Cinader.
+
 
 
 
@@ -11133,6 +11177,8 @@ find it useful or intriguing.**
 Release stats:
 
   * Contributors: Simon Michael
+
+
 
 
 
