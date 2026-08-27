@@ -7,17 +7,15 @@ users should upgrade.
 - https://hledger.org/relnotes.html#2026-08-27-hledger-1523
 - https://hledger.org/install
 
-#hledger is free, robust, friendly, fast, cross-platform, double-entry, multi-currency, multi-interface, GNU GPL-licensed, #plaintextaccounting software.
+hledger is free, robust, friendly, fast, cross-platform, double-entry, multi-currency, multi-interface, GNU GPL-licensed, #plaintextaccounting software.
 It is built around human-readable, version-controllable, future-proof plain text files.
-The UIs will seem basic at first, but it is powerful, flexible, and fun to use.
 
-It can help you learn bookkeeping, untangle accounting messes, track your financial status and history, 
-run forecasts, set budgets and saving goals, produce detailed time reports, convert/transform financial data,
-check the correctness of other systems, and create more balance and calm in your life.
-It is a combination of accounting appliance, swiss army penknife, bootcamp/refresher course, and supportive community.
-
-For more info or help, see https://hledger.org. Beginners, experts, feedback, contributors, sponsors welcome!
-
+hledger is powerful, flexible, and fun to use. It can help you:
+learn bookkeeping.. untangle accounting messes.. track your financial status and history..
+run forecasts.. set budgets and saving goals.. produce detailed time reports..
+convert/transform financial data.. check the correctness of other systems..
+and create more balance and calm in your life.
+For more info, see https://hledger.org.
 
 
 (Latest source text for announcements & blurbs, truncate as needed.)
