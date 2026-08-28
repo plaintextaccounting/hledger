@@ -278,6 +278,9 @@ import Control.Monad (guard)
 import Data.Decimal (roundTo)
 import Data.Default (def)
 import Data.Function (on)
+import Data.Foldable qualified as Fold
+import Data.List.NonEmpty qualified as NonEmpty
+import Data.List.NonEmpty (NonEmpty((:|)))
 import Data.List (find, transpose)
 #if !MIN_VERSION_base(4,20,0)
 import Data.List (foldl')
@@ -295,7 +298,7 @@ import System.Console.CmdArgs.Explicit as C (flagNone, flagReq, flagOpt)
 import Safe (headMay, maximumMay)
 import Text.Tabular.AsciiWide
     (Header(..), Align(..), Properties(..), Cell(..), Table(..), TableOpts(..),
-    cellWidth, concatTables, renderColumns, renderRowB, renderTableByRowsB, textCell)
+    cellWidth, concatTables, renderColumns, renderRowB, renderTableB, renderTableByRowsB, textCell)
 -- import Text.Printf (printf)
 
 import System.IO qualified as IO
@@ -309,7 +312,7 @@ import Hledger.Write.Csv (CSV, printCSV, printTSV)
 import Hledger.Write.Ods (printFods)
 import Hledger.Write.Html (Html, styledTableHtml, htmlAsLazyText, toHtml)
 import Hledger.Write.Spreadsheet (rawTableContent, headerCell,
-            addHeaderBorders, addRowSpanHeader,
+            addHeaderBorders, addRowSpanHeader, addRowSpanHeaderNE,
             cellFromMixedAmount, cellsFromMixedAmount, cellFromAmount)
 import Hledger.Write.Spreadsheet qualified as Ods
 
@@ -498,6 +501,7 @@ balanceReportAsText :: ReportOpts -> BalanceReport -> TB.Builder
 balanceReportAsText originalopts report@((items, total)) = case layout_ originalopts of
     LayoutBare | iscustom -> error' "Custom format not supported with commodity columns"  -- PARTIAL:
     LayoutBare -> bareLayoutBalanceReportAsText originalopts report
+    LayoutBareWide -> bareWideLayoutBalanceReportAsText originalopts report
     _ -> unlinesB ls <> unlinesB (if no_total_ opts then [] else [overline, totalLines])
   where
     opts = widenDefaultBalanceLineFormat originalopts report
@@ -569,6 +573,27 @@ bareLayoutBalanceReportAsText opts (items, total) =
     overline = Cell TopLeft . pure . wbFromText . flip T.replicate "-" . fromMaybe 0 $ headMay sizes
     singleColumnTableOuterBorder       = pretty_ opts
     singleColumnTableInterColumnBorder = if pretty_ opts then SingleLine else NoLine
+
+-- | Render a single-column balance report as plain text with a separate commodity column (--layout=barewide)
+bareWideLayoutBalanceReportAsText :: ReportOpts -> BalanceReport -> TB.Builder
+bareWideLayoutBalanceReportAsText opts br =
+  renderTableB tableopts (textCell TopLeft) (textCell TopLeft) (textCell TopLeft) $
+  Table
+    (if null totalheadings
+        then Group NoLine rowheadings
+        else Group SingleLine $ map (Group NoLine) [rowheadings, totalheadings])
+    (Group NoLine $ map (Header . Ods.cellContent) $ NonEmpty.tail header)
+    (rows++totaldata)
+  where
+    tableopts = def{tableBorders=singleColumnTableOuterBorder, prettyTable=pretty_ opts}
+    (header, body, totals) = balanceReportAsSpreadsheetParts fmt opts br
+    fmt = oneLineNoCostFmt{displayColour=color_ opts}
+    separateHeaders =
+        unzip . map (\(hd:|tl) -> (Header hd, tl)) . rawTableContent
+    (rowheadings,rows) = separateHeaders body
+    (totalheadings,totaldata) = separateHeaders totals
+    singleColumnTableOuterBorder    = pretty_ opts
+--    singleColumnTableInterRowBorder = if pretty_ opts then SingleLine else NoLine
 
 {-
 This implementation turned out to be a bit convoluted but implements the following algorithm for formatting:
@@ -643,11 +668,13 @@ headerWithoutBorders = map (\c -> c {Ods.cellBorder = Ods.noBorder})
 simpleDateSpanCell :: PeriodTitles -> DateSpan -> Ods.Cell Ods.NumLines Text
 simpleDateSpanCell ph = Ods.defaultCell . renderPeriodHeading ph
 
-addTotalBorders :: [[Ods.Cell border text]] -> [[Ods.Cell Ods.NumLines text]]
+addTotalBorders ::
+    (Functor f) =>
+    [f (Ods.Cell border text)] -> [f (Ods.Cell Ods.NumLines text)]
 addTotalBorders =
     zipWith
         (\border ->
-            map (\c -> c {
+            fmap (\c -> c {
                     Ods.cellStyle = Ods.Body Ods.Total,
                     Ods.cellBorder = Ods.noBorder {Ods.borderTop = border}}))
         (Ods.DoubleLine : repeat Ods.NoLine)
@@ -656,18 +683,31 @@ addTotalBorders =
 -- | Render a single-column balance report as FODS.
 balanceReportAsSpreadsheet ::
     AmountFormat -> ReportOpts -> BalanceReport -> [[Ods.Cell Ods.NumLines Text]]
-balanceReportAsSpreadsheet fmt opts (items, total) =
+balanceReportAsSpreadsheet fmt opts mbr =
     (if transpose_ opts then Ods.transpose else id) $
-    headers :
-    concatMap (rows Value) items ++
-    if no_total_ opts then []
-      else addTotalBorders $
-           rows Total (totalRowHeadingSpreadsheet, totalRowHeadingSpreadsheet, 0, total)
+    map Fold.toList $ header : body ++ totals
+    where (header, body, totals) =
+            balanceReportAsSpreadsheetParts fmt opts mbr
+
+-- | Render the ODS table rows for a BalanceReport.
+-- Returns the heading row, 0 or more body rows, and the totals row if enabled.
+balanceReportAsSpreadsheetParts ::
+    AmountFormat -> ReportOpts -> BalanceReport ->
+    (NonEmpty (Ods.Cell Ods.NumLines Text),
+     [NonEmpty (Ods.Cell Ods.NumLines Text)],
+     [NonEmpty (Ods.Cell Ods.NumLines Text)])
+balanceReportAsSpreadsheetParts fmt opts (items, total) =
+    (headers,
+     concatMap (rows Value) items,
+      if no_total_ opts
+        then []
+        else addTotalBorders $
+          rows Total (totalRowHeadingSpreadsheet, totalRowHeadingSpreadsheet, 0, total))
   where
     cell = Ods.defaultCell
     headers =
-      addHeaderBorders $ map headerCell $
-      "account" : case layout_ opts of
+      addHeaderBorders $ fmap headerCell $
+      "account" :| case layout_ opts of
         LayoutBareWide -> allCommodities
         LayoutBare -> ["commodity", "balance"]
         _          -> ["balance"]
@@ -675,7 +715,7 @@ balanceReportAsSpreadsheet fmt opts (items, total) =
         S.toAscList $ foldMap (\(_,_,_,ma) -> maCommodities ma) items
     rows ::
         RowClass -> BalanceReportItem ->
-        [[Ods.Cell Ods.NumLines Text]]
+        [NonEmpty (Ods.Cell Ods.NumLines Text)]
     rows rc (name, dispName, dep, ma) =
       let accountCell =
               setAccountAnchor
@@ -684,7 +724,7 @@ balanceReportAsSpreadsheet fmt opts (items, total) =
               cell $ case rc of
                 Total -> dispName  -- show the total row heading as is; --drop etc. don't apply (#2688)
                 Value -> renderBalanceAcct opts nbsp (name, dispName, dep) in
-      addRowSpanHeader accountCell $
+      addRowSpanHeaderNE accountCell $
       case layout_ opts of
       LayoutBareWide ->
           let bopts =

@@ -21,6 +21,7 @@ module Hledger.Write.Spreadsheet (
     horizontalSpan,
     addHeaderBorders,
     addRowSpanHeader,
+    addRowSpanHeaderNE,
     rawTableContent,
     cellFromMixedAmount,
     cellsFromMixedAmount,
@@ -32,6 +33,8 @@ import Hledger.Data.Amount qualified as Amt
 import Hledger.Data.Types (Amount, MixedAmount, acommodity)
 import Hledger.Data.Amount (AmountFormat)
 
+import Data.Foldable qualified as Fold
+import Data.List.NonEmpty (NonEmpty((:|)))
 import Data.List qualified as List
 import Data.Text qualified as Text
 import Data.Text (Text)
@@ -182,9 +185,9 @@ transpose :: [[Cell border text]] -> [[Cell border text]]
 transpose = List.transpose . map (map transposeCell)
 
 
-addHeaderBorders :: [Cell () text] -> [Cell NumLines text]
+addHeaderBorders :: (Functor f) => f (Cell () text) -> f (Cell NumLines text)
 addHeaderBorders =
-    map (\c -> c {cellBorder = noBorder {borderBottom = DoubleLine}})
+    fmap (\c -> c {cellBorder = noBorder {borderBottom = DoubleLine}})
 
 horizontalSpan ::
     (Lines border, Monoid text) =>
@@ -198,18 +201,23 @@ horizontalSpan subCells cell =
 addRowSpanHeader ::
     Cell border text ->
     [[Cell border text]] -> [[Cell border text]]
-addRowSpanHeader header rows =
+addRowSpanHeader header = map Fold.toList . addRowSpanHeaderNE header
+
+addRowSpanHeaderNE ::
+    Cell border text ->
+    [[Cell border text]] -> [NonEmpty (Cell border text)]
+addRowSpanHeaderNE header rows =
     case rows of
         [] -> []
-        [row] -> [header:row]
+        [row] -> [header:|row]
         _ ->
-            zipWith (:)
+            zipWith (:|)
                 (header{cellSpan = SpanVertical (length rows)} :
                  repeat header{cellSpan = Covered})
                 rows
 
-rawTableContent :: [[Cell border text]] -> [[text]]
-rawTableContent = map (map cellContent)
+rawTableContent :: (Functor f) => [f (Cell border text)] -> [f text]
+rawTableContent = map (fmap cellContent)
 
 
 
