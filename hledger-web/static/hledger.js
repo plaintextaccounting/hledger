@@ -121,7 +121,14 @@ function addformShow(showmsg) {
 function helpToggle() {
   var d = document.getElementById('helpmodal');
   if (!d) { return; }
-  if (d.open) { d.close(); } else { d.showModal(); }
+  if (d.open) {
+    d.close();
+  } else {
+    d.showModal();
+    // showModal() focuses the first focusable element, which here is the
+    // close button; focus the dialog itself so it opens without a focus ring.
+    d.focus();
+  }
 }
 
 // Make sure the add form is empty and clean and has the default number of rows.

@@ -73,6 +73,34 @@ code {
   color: black;
 }
 
+/*------------------------------------------------------------------------------------------*/
+/* 6. dialogs */
+
+/* The add form and help are <dialog> elements. Browsers draw those with a
+   plain black border, so give them the look of the modals around them. */
+dialog {
+  width: min(900px, calc(100% - 20px));
+  padding: 0;
+  border: 1px solid rgba(0, 0, 0, .2);
+  border-radius: 6px;
+  box-shadow: 0 3px 9px rgba(0, 0, 0, .5);
+}
+
+/* The program name and version, at the right of the help dialog's header. */
+.modal-header .version {
+  float: right;
+  margin-right: 4em;
+}
+dialog::backdrop {
+  background-color: rgba(0, 0, 0, .5);
+}
+
+/* showModal() puts focus on the dialog, which is a container rather than
+   something the user tabs to, so it does not need a focus ring. */
+dialog:focus {
+  outline: none;
+}
+
 ul {
     list-style-type: none;
     padding: 0;

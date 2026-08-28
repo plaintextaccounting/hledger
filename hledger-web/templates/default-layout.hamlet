@@ -62,11 +62,12 @@ $if elem ViewPermission perms
           <span .glyphicon .glyphicon-question-sign>
   ^{widget}
 
-<dialog #helpmodal aria-labelledby="helpLabel">
-  <button type="button" .close data-dismiss="modal" aria-label="Close">&times;
-  <span style="float:right; margin-right:4em;">#{progname} #{packageversion}
-  <h3 #helpLabel>Help
-  <div>
+<dialog #helpmodal tabindex=-1 aria-labelledby="helpLabel">
+  <div .modal-header>
+    <button type="button" .close data-dismiss="modal" aria-label="Close">&times;
+    <span .version>#{progname} #{packageversion}
+    <h3 .modal-title #helpLabel>Help
+  <div .modal-body>
         <div .row>
           <div .col-xs-6>
             <p>
