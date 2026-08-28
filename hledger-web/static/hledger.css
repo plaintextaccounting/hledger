@@ -80,6 +80,10 @@ code {
    plain black border, so give them the look of the modals around them. */
 dialog {
   width: min(900px, calc(100% - 20px));
+  /* Sit near the top of the viewport, where the modals did, rather than
+     centered as a <dialog> is by default. */
+  margin-top: 30px;
+  margin-bottom: 30px;
   padding: 0;
   border: 1px solid rgba(0, 0, 0, .2);
   border-radius: 6px;
