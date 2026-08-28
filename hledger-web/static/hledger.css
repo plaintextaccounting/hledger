@@ -11,6 +11,13 @@
 /*------------------------------------------------------------------------------------------*/
 /* 1. colours */
 
+/* The UI is light-only; declare that so browser-drawn widgets
+   (datalist suggestions, date picker, scrollbars) stay light
+   instead of following the OS dark theme. */
+:root {
+  color-scheme: light;
+}
+
 /* green */
 ::-moz-placeholder {
   font-style:italic;
