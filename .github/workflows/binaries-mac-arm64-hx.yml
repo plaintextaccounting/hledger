@@ -140,9 +140,9 @@ jobs:
         command -v shelltest >/dev/null || brew install shelltestrunner
         shelltest --version
 
-    - name: Test functional tests (excluding addons)
+    - name: Test functional tests
       run: |
-        COLUMNS=80 shelltest --execdir -j16 hledger/test -x /_ -x /addons -x ledger-compat/ledger-baseline -x ledger-compat/ledger-regress -x ledger-compat/ledger-collected
+        COLUMNS=80 shelltest --execdir -j16 hledger/test -x /_ -x ledger-compat/ledger-baseline -x ledger-compat/ledger-regress -x ledger-compat/ledger-collected
 
     # - name: Test haddock generation
     #   run: |

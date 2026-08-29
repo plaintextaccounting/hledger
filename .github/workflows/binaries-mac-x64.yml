@@ -129,10 +129,10 @@ jobs:
         if [[ ! -x ~/.local/bin/shelltest ]]; then $stack install --verbosity=error shelltestrunner-1.11; fi
         shelltest --version
 
-    - name: Test functional tests (excluding addons)
+    - name: Test functional tests
       run: |
         export PATH=~/.local/bin:$PATH
-        COLUMNS=80 $stack exec -- shelltest --execdir -j16 hledger/test -x /_ -x /addons -x ledger-compat/ledger-baseline -x ledger-compat/ledger-regress -x ledger-compat/ledger-collected # bin
+        COLUMNS=80 $stack exec -- shelltest --execdir -j16 hledger/test -x /_ -x ledger-compat/ledger-baseline -x ledger-compat/ledger-regress -x ledger-compat/ledger-collected # bin
 
     # artifacts:
 
