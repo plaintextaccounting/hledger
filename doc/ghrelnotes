@@ -78,7 +78,7 @@ Otherwise:
 At the command line:
 
 ```
-curl -fLOC- https://github.com/plaintextaccounting/hledger/releases/download/$REL/hledger-linux-x64.tar.gz | tar -xzv -f- -C/usr/local/bin hledger hledger-ui hledger-web
+curl -fL https://github.com/plaintextaccounting/hledger/releases/download/$REL/hledger-linux-x64.tar.gz | tar -xzv -f- -C/usr/local/bin hledger hledger-ui hledger-web
 hledger --version; hledger-ui --version; hledger-web --version    # should show $REL
 ```
 
@@ -99,13 +99,13 @@ and/or [Homebrew](https://brew.sh), and let me know.)
 
 On ARM macs:
 ```
-curl -fLOC- https://github.com/plaintextaccounting/hledger/releases/download/$REL/hledger-mac-arm64.tar.gz | tar -xzv -f- -C/usr/local/bin hledger hledger-ui hledger-web
+curl -fL https://github.com/plaintextaccounting/hledger/releases/download/$REL/hledger-mac-arm64.tar.gz | tar -xzv -f- -C/usr/local/bin hledger hledger-ui hledger-web
 hledger --version; hledger-ui --version; hledger-web --version    # should show $REL
 ```
 
 On Intel macs:
 ```
-curl -fLOC- https://github.com/plaintextaccounting/hledger/releases/download/$REL/hledger-mac-x64.tar.gz | tar -xzv -f- -C/usr/local/bin hledger hledger-ui hledger-web
+curl -fL https://github.com/plaintextaccounting/hledger/releases/download/$REL/hledger-mac-x64.tar.gz | tar -xzv -f- -C/usr/local/bin hledger hledger-ui hledger-web
 hledger --version; hledger-ui --version; hledger-web --version    # should show $REL
 ```
 
