@@ -77,6 +77,9 @@ Otherwise:
 
 At the command line:
 
+- `/usr/local/bin` is in `$PATH` by default on most distributions; to install elsewhere, change `tar`'s `-C` argument.
+- Prefix `tar` with `sudo` if `/usr/local/bin` is not writable.
+
 ```
 curl -fL https://github.com/plaintextaccounting/hledger/releases/download/$REL/hledger-linux-x64.tar.gz | tar -xzv -f- -C/usr/local/bin hledger hledger-ui hledger-web
 hledger --version; hledger-ui --version; hledger-web --version    # should show $REL
@@ -90,10 +93,20 @@ hledger --version; hledger-ui --version; hledger-web --version    # should show 
 
 </summary>
 
+If you have homebrew:
+```
+brew install hledger
+```
+
+Otherwise...
+
 In a terminal window (don't download the binaries with your web browser, they won't get authorised):
+
+- `/usr/local/bin` is in `$PATH` by default on macOS; to install elsewhere, change `tar`'s `-C` argument.
+- Prefix `tar` with `sudo` if `/usr/local/bin` is not writable.
 <!--
-(Hopefully these commands are all installed by default; 
-if not, install [XCode Command Line Tools](https://mac.install.guide/commandlinetools/) 
+(Hopefully these commands are all installed by default;
+if not, install [XCode Command Line Tools](https://mac.install.guide/commandlinetools/)
 and/or [Homebrew](https://brew.sh), and let me know.)
 -->
 
