@@ -377,3 +377,9 @@ one
 # ** 31. run passes an empty argument to an addon, as the command line does.
 $ mkdir -p $$d; printf '#!/bin/sh\nprintf "argv:"; for a in "$@"; do printf " [%%s]" "$a"; done; echo\n' >$$d/hledger-zzzz; chmod +x $$d/hledger-zzzz; printf 'zzzz a "" b\n' >$$f; PATH=$$d:$PATH hledger run -f /dev/null $$f; rm -rf $$d $$f
 argv: [-f] [/dev/null] [a] [] [b]
+
+# ** 32. repl passes an empty argument to an addon, as the command line does.
+<
+zzzz a "" b
+$ sh -c 'D=$(mktemp -d "${TMPDIR:-/tmp}/hledger-addon.XXXXXX"); J=$(mktemp "${TMPDIR:-/tmp}/hledger-addonj.XXXXXX"); printf "#!/bin/sh\nprintf argv:; for a in \"\$@\"; do printf \" [%%s]\" \"\$a\"; done; echo\n" > "$D/hledger-zzzz"; chmod +x "$D/hledger-zzzz"; printf "2017-01-01 x\n  a  1\n  b\n" > "$J"; PATH="$D:$PATH" hledger repl --no-conf -f "$J"; rm -rf "$D" "$J"'
+> /argv: \[-f\] \[.*\] \[a\] \[\] \[b\]/
