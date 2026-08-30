@@ -183,6 +183,7 @@ shellQuoteIfNeeded
 --
 quoteForCommandLine :: String -> String
 quoteForCommandLine s
+  | null s = "''"  -- an empty argument must be quoted, or it vanishes from the command line
   | any (`elem` s) (quotechars++whitespacechars++shellchars) = singleQuote $ escapeSingleQuotes s
   | otherwise = s
 

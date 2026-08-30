@@ -373,3 +373,7 @@ after
 $ mkdir -p $$d; printf '#!/bin/sh\nexit 3\n' >$$d/hledger-zzzz; chmod +x $$d/hledger-zzzz; PATH=$$d:$PATH hledger run -f /dev/null -- echo one -- zzzz -- echo two; s=$?; rm -rf $$d; exit $s
 one
 >= 3
+
+# ** 31. run passes an empty argument to an addon, as the command line does.
+$ mkdir -p $$d; printf '#!/bin/sh\nprintf "argv:"; for a in "$@"; do printf " [%%s]" "$a"; done; echo\n' >$$d/hledger-zzzz; chmod +x $$d/hledger-zzzz; printf 'zzzz a "" b\n' >$$f; PATH=$$d:$PATH hledger run -f /dev/null $$f; rm -rf $$d $$f
+argv: [-f] [/dev/null] [a] [] [b]
