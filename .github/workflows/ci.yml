@@ -49,6 +49,10 @@ jobs:
       # arch:  x64
       # image: https://github.com/actions/runner-images/blob/main/images/ubuntu/Ubuntu2404-Readme.md
 
+    # so the web-e2e job below can tell whether this job actually built anything
+    outputs:
+      do-all: ${{ steps.skipcheck.outputs.do-all }}
+
     env:
       stack:     stack
       ghcid:       9.10.1
@@ -116,12 +120,19 @@ jobs:
         fi
 
     - name: Skip remaining steps if the last commit message begins with ;
+      id: skipcheck
       shell: bash
       run: |
-        echo "git log -1 --pretty='%s' ${GITHUB_HEAD_REF:+origin/$GITHUB_HEAD_REF} >> $$.gitlog"
-        (git log -1 --pretty='%s' ${GITHUB_HEAD_REF:+origin/$GITHUB_HEAD_REF} >> $$.gitlog \
-          && (grep -qE '^ *;' $$.gitlog || echo "do-all=true" >> $GITHUB_ENV)) \
-          || ( echo "could not identify commit range, continuing CI steps"; echo "do-all=true" >> $GITHUB_ENV )
+        DOALL=true
+        if git log -1 --pretty='%s' ${GITHUB_HEAD_REF:+origin/$GITHUB_HEAD_REF} > $$.gitlog
+        then
+          if grep -qE '^ *;' $$.gitlog; then DOALL=; fi
+        else
+          echo "could not identify commit range, continuing CI steps"
+        fi
+        # as an env var for this job's steps, and as an output for the web-e2e job below
+        if [ -n "$DOALL" ]; then echo "do-all=true" >> $GITHUB_ENV; fi
+        echo "do-all=$DOALL" >> $GITHUB_OUTPUT
 
 
     - name: Check embedded files
@@ -418,3 +429,77 @@ jobs:
     #   env:
     #     MATRIX_CONTEXT: ${{ toJson(matrix) }}
     #   run: echo "$MATRIX_CONTEXT"
+
+
+  # The hledger-web browser tests (hledger-web/test/browser, Playwright).
+  # Reuses the binary the ci job just built, so this adds no Haskell build time.
+  #
+  # This job reports test failures, but is not a required check, so it does not
+  # block merging. These tests track the web UI's current behavior, so a PR that
+  # changes the UI on purpose has to update them, which needs node and a browser
+  # download (~550M). That is a reason to see how often it actually bites before
+  # making this a merge gate, not a reason to hide the result.
+  web-e2e:
+    needs: ci
+    if: needs.ci.outputs.do-all
+    runs-on: ubuntu-24.04
+
+    # this job installs and runs code from the npm registry, so give it nothing else
+    permissions:
+      contents: read
+
+    steps:
+
+    - name: Check out
+      uses: actions/checkout@v7
+
+    - name: Get the hledger-web built by the ci job
+      uses: actions/download-artifact@v7
+      with:
+        name: hledger-linux-x64
+        path: bin
+
+    - name: Put hledger-web on PATH
+      run: |
+        chmod +x bin/hledger-web
+        echo "$PWD/bin" >> $GITHUB_PATH
+        bin/hledger-web --version
+
+    - name: Install node
+      uses: actions/setup-node@v6
+      with:
+        node-version: 22
+
+    - name: Enable pnpm
+      run: corepack enable
+
+    # @playwright/test pins the chromium build it downloads, so the lockfile
+    # fixes the browser version too, and keys this cache.
+    - name: Cache - playwright browsers
+      uses: actions/cache@v6
+      with:
+        path: ~/.cache/ms-playwright
+        key: ${{ runner.os }}-playwright-${{ hashFiles('hledger-web/test/browser/pnpm-lock.yaml') }}
+
+    - name: Install the test dependencies
+      working-directory: hledger-web/test/browser
+      run: |
+        pnpm install --frozen-lockfile --ignore-scripts
+        pnpm exec playwright install --with-deps chromium
+
+    - name: Test hledger-web in a browser
+      id: browsertest
+      working-directory: hledger-web/test/browser
+      env:
+        # without this, global-setup.js sees stack.yaml at the repo root and
+        # tries "stack exec -- hledger-web"; this job has no stack setup
+        HLEDGER_WEB: hledger-web
+        PLAYWRIGHT_HTML_OPEN: never
+      run: pnpm exec playwright test --reporter=list,html
+
+    - name: Upload the report if the tests failed
+      uses: actions/upload-artifact@v7
+      if: always() && steps.browsertest.outcome == 'failure'
+      with:
+        name: playwright-report
+        path: hledger-web/test/browser/playwright-report
