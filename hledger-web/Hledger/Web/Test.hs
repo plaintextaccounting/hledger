@@ -268,6 +268,9 @@ hledgerWebTest = do
     -- in the CSRF token, so that the two failures can only be about the token.
     -- The form is wrapped in identifyForm, so _formid must be sent too, or the
     -- post is ignored as FormMissing and these would pass either way.
+    -- Both postings send an explicit amount: the form pairs the account and
+    -- amount params by position, and yesod-test before 1.7.0 sends repeated
+    -- params in reverse order, which would leave an account without its amount.
     let postTransaction desc = do
           setMethod "POST"
           setUrl AddR
@@ -277,7 +280,7 @@ hledgerWebTest = do
           addPostParam "account" "assets:bank:checking"
           addPostParam "amount" "1"
           addPostParam "account" "income:gifts"
-          addPostParam "amount" ""
+          addPostParam "amount" "-1"
 
     yit "does not add a transaction when the CSRF token is missing" $ do
       request $ postTransaction "CsrfNoToken"
