@@ -180,6 +180,8 @@ shellQuoteIfNeeded
 -- "'\"'"
 -- >>> quoteForCommandLine "$"
 -- "'$'"
+-- >>> quoteForCommandLine "it's"
+-- "'it'\\''s'"
 --
 quoteForCommandLine :: String -> String
 quoteForCommandLine s
@@ -187,11 +189,13 @@ quoteForCommandLine s
   | any (`elem` s) (quotechars++whitespacechars++shellchars) = singleQuote $ escapeSingleQuotes s
   | otherwise = s
 
--- | Escape single quotes appearing in a string we're protecting by wrapping in single quotes
+-- | Escape single quotes appearing in a string we're protecting by wrapping in single quotes.
+-- A backslash is not an escape inside single quotes in POSIX sh, so the quote has to be
+-- closed, the apostrophe emitted separately, and the quote reopened: 'it'\\''s'.
 escapeSingleQuotes :: String -> String
 escapeSingleQuotes = concatMap escapeSingleQuote
   where
-    escapeSingleQuote c | c `elem` "'" = ['\\',c]
+    escapeSingleQuote c | c `elem` "'" = "'\\''"
     escapeSingleQuote c = [c]
 
 quotechars, whitespacechars, redirectchars, shellchars :: [Char]

@@ -383,3 +383,7 @@ argv: [-f] [/dev/null] [a] [] [b]
 zzzz a "" b
 $ sh -c 'D=$(mktemp -d "${TMPDIR:-/tmp}/hledger-addon.XXXXXX"); J=$(mktemp "${TMPDIR:-/tmp}/hledger-addonj.XXXXXX"); printf "#!/bin/sh\nprintf argv:; for a in \"\$@\"; do printf \" [%%s]\" \"\$a\"; done; echo\n" > "$D/hledger-zzzz"; chmod +x "$D/hledger-zzzz"; printf "2017-01-01 x\n  a  1\n  b\n" > "$J"; PATH="$D:$PATH" hledger repl --no-conf -f "$J"; rm -rf "$D" "$J"'
 > /argv: \[-f\] \[.*\] \[a\] \[\] \[b\]/
+
+# ** 33. run passes an argument containing an apostrophe to an addon unchanged.
+$ mkdir -p $$d; printf '#!/bin/sh\nprintf "argv:"; for a in "$@"; do printf " [%%s]" "$a"; done; echo\n' >$$d/hledger-zzzz; chmod +x $$d/hledger-zzzz; printf 'zzzz a "it%ss" b\n' "'" >$$f; PATH=$$d:$PATH hledger run -f /dev/null $$f; rm -rf $$d $$f
+argv: [-f] [/dev/null] [a] [it's] [b]
