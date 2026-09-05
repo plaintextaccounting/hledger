@@ -105,7 +105,7 @@ library:
   dependencies:
   - hledger-lib >=1.52.99 && <1.53
   - hledger >=1.52.99 && <1.53
-  - aeson >=1 && <2.4
+  - aeson >=2.2.5.1 && <2.4  # avoid https://haskell.github.io/security-advisories/advisory/HSEC-2026-0007.html
   - base64
   - blaze-html
   - blaze-markup
@@ -148,7 +148,7 @@ library:
   - yesod        >=1.4 && < 1.7
   - yesod-core   >=1.4 && < 1.7
   - yesod-form   >=1.4 && < 1.8
-  - yesod-static >=1.4 && < 1.6.1.1  # https://github.com/psibi/crypton-conduit/issues/3
+  - yesod-static >=1.4 && < 1.7
   - hspec
   - yesod-test
 
