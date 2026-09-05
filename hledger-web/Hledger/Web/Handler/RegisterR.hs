@@ -49,6 +49,7 @@ getRegisterR = do
       items =
         styleAmounts (journalCommodityStylesWith HardRounding j) $
         accountTransactionsReport rspec{_rsQuery=q} j acctQuery
+      balancelabel :: String
       balancelabel
         | isJust (inAccount qopts), balanceaccum_ (_rsReportOpts rspec) == Historical = "Historical Total"
         | isJust (inAccount qopts) = "Period Total"
@@ -113,6 +114,12 @@ registerChartHtml q title percommoditytxnreports = $(hamletFile "templates/chart
    showZeroCommodity = wbUnpack . showMixedAmountB oneLineNoCostFmt{displayCost=False,displayZeroCommodity=True}
    shownull c = if null c then " " else c
    nodatelink = (RegisterR, [("q", T.unwords $ removeDates q)])
+   triDate (_,tacct,_,_,_,_) = tdate tacct
+   triAmount (_,_,_,_,a,_) = a
+   triBalance (_,_,_,_,_,a) = a
+   triOrigTransaction (torig,_,_,_,_,_) = torig
+   triCommodityAmount c = filterMixedAmountByCommodity c . triAmount
+   triCommodityBalance c = filterMixedAmountByCommodity c . triBalance
 
 -- | Makes a unix timestamp (milliseconds since epoch) corresponding to noon on the given date in UTC.
 dayToUtcNoonTimestamp :: Day -> Integer

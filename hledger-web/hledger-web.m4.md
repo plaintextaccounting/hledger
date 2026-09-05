@@ -27,10 +27,10 @@ _hledgerdescription_
 
 _web_({{
 <div class="screenshots-right">
-<a href="/images/hledger-web/normal/register.png" class="highslide" onclick="return hs.expand(this)"><img src="/images/hledger-web/normal/register.png" title="Account register view with accounts sidebar" height="180" /></a>
-<a href="/images/hledger-web/normal/journal.png" class="highslide" onclick="return hs.expand(this)"><img src="/images/hledger-web/normal/journal.png" title="Journal view" height="180" /></a>
-<a href="/images/hledger-web/normal/help.png" class="highslide" onclick="return hs.expand(this)"><img src="/images/hledger-web/normal/help.png" title="Help dialog" height="180" /></a>
-<a href="/images/hledger-web/normal/add.png" class="highslide" onclick="return hs.expand(this)"><img src="/images/hledger-web/normal/add.png" title="Add form" height="180" /></a>
+<a href="/images/hledger-web/normal/register.png" class="highslide"><img src="/images/hledger-web/normal/register.png" title="Account register view with accounts sidebar" height="180" /></a>
+<a href="/images/hledger-web/normal/journal.png" class="highslide"><img src="/images/hledger-web/normal/journal.png" title="Journal view" height="180" /></a>
+<a href="/images/hledger-web/normal/help.png" class="highslide"><img src="/images/hledger-web/normal/help.png" title="Help dialog" height="180" /></a>
+<a href="/images/hledger-web/normal/add.png" class="highslide"><img src="/images/hledger-web/normal/add.png" title="Add form" height="180" /></a>
 </div>
 }})
 
